@@ -1,0 +1,35 @@
+@startuml
+package "Individuals API" {
+    [API Gateway]
+    [Auth Controller]
+    [User Service]
+    [Token Service]
+    [Keycloak Integration]
+}
+package "Security" {
+    [Spring Security]
+    [Keycloak Server]
+}
+package "Infrastructure" {
+    [Docker]
+    [TestContainers]
+}
+package "Testing" {
+    [JUnit 5]
+    [Mockito]
+}
+
+[API Gateway] --> [Auth Controller] : Обрабатывает HTTP запросы
+[Auth Controller] --> [User Service] : Регистрация и логин
+[Auth Controller] --> [Token Service] : Обновление токенов
+[User Service] --> [Keycloak Integration] : Взаимодействие с Keycloak
+[Token Service] --> [Keycloak Integration] : Взаимодействие с Keycloak
+[Keycloak Integration] --> [Keycloak Server] : API вызовы
+
+[Auth Controller] ..> [Spring Security] : Аутентификация и авторизация
+
+[Individuals API] --> [Docker] : Развертывание
+[Individuals API] --> [TestContainers] : Тестирование с контейнерами
+[User Service] --> [JUnit 5] : Юнит-тесты
+[User Service] --> [Mockito] : Мокирование зависимостей
+@enduml
