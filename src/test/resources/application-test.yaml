@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: individuals-api
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
+        opaquetoken:
+          client-id: ${keycloak.clientId}
+          client-secret: ${keycloak.clientSecret}
+          introspection-uri: ${keycloak.urls.auth}/realms/${keycloak.realm}/protocol/openid-connect/token/introspect
+jwt:
+  auth:
+    converter:
+      principal-attribute: preferred_username
+      resource-id: ${keycloak.clientId}
+keycloak:
+  realm: appauth
+  clientId: app-auth-client-id
+  clientSecret: Oe5AVBjMyNvYQD3ht2XjSJZWiqg6JMO9
+  urls:
+    auth: http://${keycloak.domain}
+url-frontend-guest: http://localhost
+logging:
+  level:
+    root: info

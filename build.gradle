@@ -42,12 +42,12 @@ dependencies {
     testImplementation 'io.projectreactor:reactor-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 //    testImplementation 'org.springframework.security:spring-security-test'
-//    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
-//    testImplementation 'org.testcontainers:testcontainers:1.19.7'
-//    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:testcontainers:1.19.7'
+    testImplementation 'org.testcontainers:junit-jupiter'
 //    testImplementation 'org.testcontainers:postgresql'
 //    testImplementation 'io.rest-assured:rest-assured'
-//    testImplementation 'com.github.dasniko:testcontainers-keycloak:3.3.1'
+    testImplementation 'com.github.dasniko:testcontainers-keycloak:3.3.1'
 //    testImplementation 'com.h2database:h2:2.2.224'
 
     //if dns resolving not working by default for mac os
