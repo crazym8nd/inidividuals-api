@@ -1,5 +1,5 @@
 ### register user
-POST http://localhost:8080/v1/auth/registration
+POST http://localhost:8080/v1/auth/test
 accept: application/json
 Content-Type: application/json
 

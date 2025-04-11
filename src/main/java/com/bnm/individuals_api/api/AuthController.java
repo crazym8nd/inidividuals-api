@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,11 +25,10 @@ public class AuthController implements AuthApi {
   private final KeycloakService keycloakService;
 
   @Override
-  @PostMapping("/registration")
-  public ResponseEntity<UserRegistrationResponse> registerUser(
+  @PostMapping("/test")
+  public Mono<UserRegistrationResponse> registerUser(
       @RequestBody @Nonnull final UserRegistrationRequest request) {
-    final SuccessUserRegistration result = keycloakService.registerUser(
-        DtoMapper.mapFromRequest(request));
-    return new ResponseEntity<>(DtoMapper.mapToResponse(result), HttpStatus.CREATED);
+    return keycloakService.registerUser(DtoMapper.mapFromRequest(request))
+        .map(DtoMapper::mapToResponse);
   }
 }

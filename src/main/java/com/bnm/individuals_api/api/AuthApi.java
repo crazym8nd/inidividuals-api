@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import reactor.core.publisher.Mono;
 
 @Tag(name = "API для auth")
 public interface AuthApi {
@@ -45,5 +46,5 @@ public interface AuthApi {
       ),
       @ApiResponse(responseCode = "500", content = @Content)
   })
-  ResponseEntity<UserRegistrationResponse> registerUser(UserRegistrationRequest request);
+  Mono<UserRegistrationResponse> registerUser(UserRegistrationRequest request);
 }
