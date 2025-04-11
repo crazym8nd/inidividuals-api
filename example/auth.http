@@ -28,3 +28,16 @@ Content-Type: application/json
   "password": "qwerty",
   "confirmPassword": "qwerty"
 }
+
+### about me
+GET http://localhost:8080/v1/auth/me
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### refresh token
+POST http://localhost:8080/v1/auth/refresh-token
+Content-Type: application/json
+
+{
+  "refreshToken": "{{token}}"
+}

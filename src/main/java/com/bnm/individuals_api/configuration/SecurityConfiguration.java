@@ -33,7 +33,7 @@ import reactor.core.publisher.Mono;
 public class SecurityConfiguration {
 
   private final String[] publicRoutes = {"/v1/auth/test/**", "/v1/auth/registration/**",
-      "/v1/auth/login"};
+      "/v1/auth/login/**", "/v1/auth/refresh-token/**"};
 
   @Bean
   public SecurityWebFilterChain securityWebFilterChain(final ServerHttpSecurity http) {
@@ -42,7 +42,7 @@ public class SecurityConfiguration {
         .authorizeExchange(configurer -> configurer
             .pathMatchers(HttpMethod.OPTIONS).permitAll()
             .pathMatchers(publicRoutes).permitAll()
-            .pathMatchers("/v1/auth/info/**").authenticated()
+            .pathMatchers("/v1/auth/me").authenticated()
             .anyExchange()
             .authenticated())
 
