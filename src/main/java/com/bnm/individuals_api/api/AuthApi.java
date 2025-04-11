@@ -1,6 +1,7 @@
 package com.bnm.individuals_api.api;
 
 import com.bnm.individuals_api.dto.ErrorResponse;
+import com.bnm.individuals_api.dto.SuccessUserRegistration;
 import com.bnm.individuals_api.dto.UserRegistrationRequest;
 import com.bnm.individuals_api.dto.UserRegistrationResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,11 +11,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import reactor.core.publisher.Mono;
 
 @Tag(name = "API для auth")
 public interface AuthApi {
+
+  UserRegistrationResponse testEndpoint(UserRegistrationRequest request);
 
   @Operation(summary = "Регистрация пользователя")
   @ApiResponses(value = {
@@ -47,4 +49,6 @@ public interface AuthApi {
       @ApiResponse(responseCode = "500", content = @Content)
   })
   Mono<UserRegistrationResponse> registerUser(UserRegistrationRequest request);
+
+  Mono<SuccessUserRegistration> loginUser(UserRegistrationRequest request);
 }

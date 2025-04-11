@@ -23,10 +23,41 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.springdoc:springdoc-openapi-starter-webflux-api:2.8.6'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+ //   implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
+    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+//    implementation 'io.projectreactor:reactor-core'
+
+    //keycloak
+       implementation "org.keycloak:keycloak-admin-client:${keycloak_admin_client_version}"
+
+    //dev
+//    implementation 'org.projectlombok:lombok'
+//    compileOnly 'org.projectlombok:lombok'
+//    annotationProcessor "org.projectlombok:lombok"
+
     //test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.projectreactor:reactor-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+//    testImplementation 'org.springframework.security:spring-security-test'
+//    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+//    testImplementation 'org.testcontainers:testcontainers:1.19.7'
+//    testImplementation 'org.testcontainers:junit-jupiter'
+//    testImplementation 'org.testcontainers:postgresql'
+//    testImplementation 'io.rest-assured:rest-assured'
+//    testImplementation 'com.github.dasniko:testcontainers-keycloak:3.3.1'
+//    testImplementation 'com.h2database:h2:2.2.224'
+
+    //if dns resolving not working by default for mac os
+    //testImplementation 'io.projectreactor.netty:reactor-netty-http:1.0.39'
+    //testImplementation 'io.projectreactor.netty:reactor-netty-core:1.0.39'
+    // For macOS with Apple Silicon (M1)
+    //runtimeOnly 'io.netty:netty-resolver-dns-native-macos:4.1.77.Final:osx-aarch_64'
+    // Mapper
+    implementation "org.mapstruct:mapstruct:${mapstruct_version}"
+    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
 }
 
 tasks.named('test') {

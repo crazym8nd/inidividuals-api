@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity.CsrfSpec;
 import org.springframework.security.core.GrantedAuthority;
@@ -33,7 +32,8 @@ import reactor.core.publisher.Mono;
 @Configuration
 public class SecurityConfiguration {
 
-  private final String[] publicRoutes = {"/v1/auth/test/**", "/v1/auth/login"};
+  private final String[] publicRoutes = {"/v1/auth/test/**", "/v1/auth/registration/**",
+      "/v1/auth/login"};
 
   @Bean
   public SecurityWebFilterChain securityWebFilterChain(final ServerHttpSecurity http) {
@@ -69,7 +69,8 @@ public class SecurityConfiguration {
               new ReactiveJwtGrantedAuthoritiesConverterAdapter(jwt3 -> {
                 final Stream<GrantedAuthority> defaultAuthorities = jwtGrantedAuthoritiesConverter.convert(
                     jwt3).stream();
-                final Stream<GrantedAuthority> customAuthorities = customConverter.convert(jwt3).stream();
+                final Stream<GrantedAuthority> customAuthorities = customConverter.convert(jwt3)
+                    .stream();
                 return Stream.concat(defaultAuthorities, customAuthorities)
                     .collect(Collectors.toList());
               })

@@ -6,5 +6,7 @@ import reactor.core.publisher.Mono;
 
 public interface KeycloakService {
 
-  Mono<SuccessUserRegistration> registerUser(UserRegistration userRegistration);
+  Mono<SuccessUserRegistration> testEnpoint(UserRegistration userRegistration);
+
+  Mono<String> registerUser(UserRegistration userRegistration);
 }

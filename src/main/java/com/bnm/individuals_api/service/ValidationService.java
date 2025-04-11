@@ -4,7 +4,7 @@ import com.bnm.individuals_api.dto.UserRegistration;
 
 public interface ValidationService {
 
-  void validate(UserRegistration userRegistration);
+  void hardcodedValidation(UserRegistration userRegistration);
 
   boolean isValid(UserRegistration userRegistration);
 }

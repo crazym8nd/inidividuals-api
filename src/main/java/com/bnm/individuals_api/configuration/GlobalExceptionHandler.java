@@ -11,7 +11,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 public class GlobalExceptionHandler {
 
   @ExceptionHandler(InvalidRequestData.class)
-  public ResponseEntity<ErrorResponse> handleInvalidRequestDataException(final InvalidRequestData ex) {
+  public ResponseEntity<ErrorResponse> handleInvalidRequestDataException(
+      final InvalidRequestData ex) {
     final ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), 400);
     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
   }

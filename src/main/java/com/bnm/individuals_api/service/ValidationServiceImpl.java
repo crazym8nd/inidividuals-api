@@ -17,7 +17,7 @@ public class ValidationServiceImpl implements ValidationService {
   );
 
   @Override
-  public void validate(final UserRegistration userRegistration) {
+  public void hardcodedValidation(final UserRegistration userRegistration) {
     if (!Objects.equals(userRegistration, hardcodedValidation)) {
       log.info("Data is invalid: '{}'", userRegistration.toString());
       throw new InvalidRequestData(
