@@ -5,9 +5,8 @@ import com.bnm.individuals_api.dto.LoginRequest;
 import com.bnm.individuals_api.dto.RefreshTokenRequest;
 import com.bnm.individuals_api.dto.SuccessAuthResponse;
 import com.bnm.individuals_api.dto.UserRegistrationRequest;
-import com.bnm.individuals_api.mapper.DtoMapper;
-import com.bnm.individuals_api.model.Credentials;
-import com.bnm.individuals_api.model.RefreshToken;
+import com.bnm.individuals_api.mapper.AuthMapper;
+import com.bnm.individuals_api.mapper.UserMapper;
 import com.bnm.individuals_api.service.AuthService;
 import com.bnm.individuals_api.service.KeycloakService;
 import jakarta.annotation.Nonnull;
@@ -31,42 +30,38 @@ public class AuthController implements AuthApi {
 
   private final KeycloakService keycloakService;
   private final AuthService authService;
+  private final AuthMapper authMapper;
+  private final UserMapper userMapper;
 
   @Override
   @PostMapping("/registration")
   @ResponseStatus(HttpStatus.CREATED)
   public Mono<SuccessAuthResponse> registerUser(
       @RequestBody @Nonnull final UserRegistrationRequest request) {
-    return keycloakService.registerUser(DtoMapper.mapFromRequest(request)).map(authData ->
-        new SuccessAuthResponse(authData.accessToken(), authData.expiresIn(),
-            authData.refreshToken(), authData.tokenType()));
+    return keycloakService.registerUser(authMapper.toUserRegistration(request))
+        .map(authMapper::toSuccessAuthResponse);
   }
 
   @Override
   @PostMapping("/login")
   public Mono<SuccessAuthResponse> loginUser(
       @RequestBody @Nonnull final LoginRequest request) {
-
-    return authService.authenticateUser(new Credentials(request.email(), request.password()))
-        .map(authData ->
-            new SuccessAuthResponse(authData.accessToken(), authData.expiresIn(),
-                authData.refreshToken(), authData.tokenType()));
+    return authService.authenticateUser(authMapper.toCredentials(request))
+        .map(authMapper::toSuccessAuthResponse);
   }
 
   @Override
   @GetMapping("/me")
   public Mono<AboutMeResponse> aboutMe(final Principal principal) {
-    return authService.aboutMe(principal).map(userData -> new AboutMeResponse(
-        userData.userId(), userData.mail(), userData.roles(), userData.createdAt()
-    ));
+    return authService.aboutMe(principal)
+        .map(userMapper::toAboutMeResponse);
   }
 
   @Override
   @PostMapping("/refresh-token")
   public Mono<SuccessAuthResponse> refreshToken(
       @RequestBody @Nonnull final RefreshTokenRequest request) {
-    return authService.refreshAccessToken(new RefreshToken(request.refreshToken())).map(authData ->
-        new SuccessAuthResponse(authData.accessToken(), authData.expiresIn(),
-            authData.refreshToken(), authData.tokenType()));
+    return authService.refreshAccessToken(authMapper.toRefreshToken(request))
+        .map(authMapper::toSuccessAuthResponse);
   }
 }
