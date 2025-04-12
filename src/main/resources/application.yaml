@@ -13,6 +13,7 @@ jwt:
     converter:
       principal-attribute: preferred_username
       resource-id: ${keycloak.clientId}
+  jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
 keycloak:
   realm: appauth
   domain: localhost:9005
