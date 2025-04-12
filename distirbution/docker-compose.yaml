@@ -25,6 +25,6 @@ services:
       KC_DB_URL: "jdbc:postgresql://db:5432/person"
       KC_DB_USERNAME: "postgres"
       KC_DB_PASSWORD: "password"
-      KEYCLOAK_ADMIN: "admin"
-      KEYCLOAK_ADMIN_PASSWORD: "admin"
+      KC_BOOTSTRAP_ADMIN_USERNAME: "admin"
+      KC_BOOTSTRAP_ADMIN_PASSWORD: "admin"
       KC_FEATURES: token-exchange,admin-fine-grained-authz
