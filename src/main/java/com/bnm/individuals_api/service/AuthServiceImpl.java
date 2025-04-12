@@ -1,8 +1,8 @@
 package com.bnm.individuals_api.service;
 
+import com.bnm.individuals_api.dto.LoginRequest;
 import com.bnm.individuals_api.dto.RefreshTokenRequest;
-import com.bnm.individuals_api.dto.SuccessUserRegistration;
-import com.bnm.individuals_api.dto.UserRegistrationRequest;
+import com.bnm.individuals_api.dto.SuccessAuthResponse;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.OAuth2Constants;
@@ -37,7 +37,7 @@ public class AuthServiceImpl implements AuthService {
   private String clientSecret;
 
 
-  public Keycloak keycloakForAuth(final UserRegistrationRequest request) {
+  public Keycloak keycloakForAuth(final LoginRequest request) {
     return KeycloakBuilder.builder()
         .serverUrl(authServerUrl)
         .realm(realm)
@@ -50,14 +50,14 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  public Mono<SuccessUserRegistration> getToken(final UserRegistrationRequest request) {
+  public Mono<SuccessAuthResponse> authenticateUser(final LoginRequest request) {
     try {
       if (request.email() == null || request.password() == null) {
         return Mono.error(new IllegalArgumentException("Invalid credentials"));
       }
       final AccessTokenResponse token = keycloakForAuth(request).tokenManager().getAccessToken();
 
-      return Mono.just(new SuccessUserRegistration(
+      return Mono.just(new SuccessAuthResponse(
           token.getToken(),
           (int) token.getExpiresIn(),
           token.getRefreshToken(),
@@ -69,7 +69,7 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  public Mono<SuccessUserRegistration> refreshToken(final RefreshTokenRequest request) {
+  public Mono<SuccessAuthResponse> refreshAccessToken(final RefreshTokenRequest request) {
     try {
       if (request == null || request.refreshToken() == null) {
         return Mono.error(new IllegalArgumentException("Invalid refresh token"));
@@ -86,7 +86,7 @@ public class AuthServiceImpl implements AuthService {
               .with("refresh_token", request.refreshToken()))
           .retrieve()
           .bodyToMono(AccessTokenResponse.class)
-          .map(tokenResponse -> new SuccessUserRegistration(
+          .map(tokenResponse -> new SuccessAuthResponse(
               tokenResponse.getToken(),
               (int) tokenResponse.getExpiresIn(),
               tokenResponse.getRefreshToken(),

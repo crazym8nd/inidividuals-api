@@ -1,10 +1,10 @@
 package com.bnm.individuals_api.api;
 
 import com.bnm.individuals_api.dto.AboutMeResponse;
+import com.bnm.individuals_api.dto.LoginRequest;
 import com.bnm.individuals_api.dto.RefreshTokenRequest;
-import com.bnm.individuals_api.dto.SuccessUserRegistration;
+import com.bnm.individuals_api.dto.SuccessAuthResponse;
 import com.bnm.individuals_api.dto.UserRegistrationRequest;
-import com.bnm.individuals_api.dto.UserRegistrationResponse;
 import com.bnm.individuals_api.mapper.DtoMapper;
 import com.bnm.individuals_api.service.AuthService;
 import com.bnm.individuals_api.service.KeycloakService;
@@ -12,7 +12,6 @@ import jakarta.annotation.Nonnull;
 import java.security.Principal;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -38,27 +37,19 @@ public class AuthController implements AuthApi {
   private final AuthService authService;
 
   @Override
-  @PostMapping("/test")
-  public UserRegistrationResponse testEndpoint(
-      @RequestBody @Nonnull final UserRegistrationRequest request) {
-    final var test = keycloakService.testEnpoint(DtoMapper.mapFromRequest(request));
-    return DtoMapper.mapToResponse(Objects.requireNonNull(test.block()));
-  }
-
-  @Override
   @PostMapping("/registration")
   @ResponseStatus(HttpStatus.CREATED)
-  public Mono<UserRegistrationResponse> registerUser(
+  public Mono<SuccessAuthResponse> registerUser(
       @RequestBody @Nonnull final UserRegistrationRequest request) {
     return keycloakService.registerUser(DtoMapper.mapFromRequest(request))
-        .map(response -> new UserRegistrationResponse("success", 3600, response, "BEARER"));
+        .map(response -> new SuccessAuthResponse("success", 3600, response, "BEARER"));
   }
 
   @Override
   @PostMapping("/login")
-  public Mono<SuccessUserRegistration> loginUser(
-      @RequestBody @Nonnull final UserRegistrationRequest request) {
-    return authService.getToken(request);
+  public Mono<SuccessAuthResponse> loginUser(
+      @RequestBody @Nonnull final LoginRequest request) {
+    return authService.authenticateUser(request);
   }
 
   @Override
@@ -81,9 +72,8 @@ public class AuthController implements AuthApi {
 
   @Override
   @PostMapping("/refresh-token")
-  public Mono<SuccessUserRegistration> refreshToken(
+  public Mono<SuccessAuthResponse> refreshToken(
       @RequestBody @Nonnull final RefreshTokenRequest request) {
-    final var response = authService.refreshToken(request);
-    return response;
+    return authService.refreshAccessToken(request);
   }
 }

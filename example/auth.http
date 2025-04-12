@@ -1,14 +1,3 @@
-### test endpoint
-POST http://localhost:8080/v1/auth/test
-accept: application/json
-Content-Type: application/json
-
-{
-  "email": "111@asd.com",
-  "password": "qwerty",
-  "confirmPassword": "qwerty"
-}
-
 ### register user
 POST http://localhost:8080/v1/auth/registration
 Content-Type: application/json
@@ -32,12 +21,12 @@ Content-Type: application/json
 ### about me
 GET http://localhost:8080/v1/auth/me
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{access_token}}
 
 ### refresh token
 POST http://localhost:8080/v1/auth/refresh-token
 Content-Type: application/json
 
 {
-  "refreshToken": "{{token}}"
+  "refreshToken": "{{refresh_token}}"
 }
