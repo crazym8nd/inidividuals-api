@@ -1,6 +1,5 @@
 package com.bnm.individuals_api.api;
 
-import com.bnm.individuals_api.configuration.KeycloakUserDetails;
 import com.bnm.individuals_api.dto.AboutMeResponse;
 import com.bnm.individuals_api.dto.LoginRequest;
 import com.bnm.individuals_api.dto.RefreshTokenRequest;
@@ -13,12 +12,9 @@ import com.bnm.individuals_api.service.AuthService;
 import com.bnm.individuals_api.service.KeycloakService;
 import jakarta.annotation.Nonnull;
 import java.security.Principal;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -51,27 +47,18 @@ public class AuthController implements AuthApi {
   public Mono<SuccessAuthResponse> loginUser(
       @RequestBody @Nonnull final LoginRequest request) {
 
-    return authService.authenticateUser(new Credentials(request.email(), request.password())).map(authData ->
-        new SuccessAuthResponse(authData.accessToken(), authData.expiresIn(),
-            authData.refreshToken(), authData.tokenType()));
+    return authService.authenticateUser(new Credentials(request.email(), request.password()))
+        .map(authData ->
+            new SuccessAuthResponse(authData.accessToken(), authData.expiresIn(),
+                authData.refreshToken(), authData.tokenType()));
   }
 
   @Override
   @GetMapping("/me")
   public Mono<AboutMeResponse> aboutMe(final Principal principal) {
-    return Mono.just(principal)
-        .cast(JwtAuthenticationToken.class)
-        .map(jwtAuth -> {
-          final KeycloakUserDetails userDetails = new KeycloakUserDetails(jwtAuth.getToken());
-          return new AboutMeResponse(
-              userDetails.getId(),
-              userDetails.getEmail(),
-              userDetails.getAuthorities().stream()
-                  .map(GrantedAuthority::getAuthority)
-                  .collect(Collectors.toUnmodifiableSet()),
-              userDetails.getCreatedAt()
-          );
-        });
+    return authService.aboutMe(principal).map(userData -> new AboutMeResponse(
+        userData.userId(), userData.mail(), userData.roles(), userData.createdAt()
+    ));
   }
 
   @Override

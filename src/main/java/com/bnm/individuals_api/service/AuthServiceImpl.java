@@ -1,9 +1,12 @@
 package com.bnm.individuals_api.service;
 
-import com.bnm.individuals_api.dto.SuccessAuthResponse;
+import com.bnm.individuals_api.configuration.KeycloakUserDetails;
 import com.bnm.individuals_api.model.AuthData;
 import com.bnm.individuals_api.model.Credentials;
 import com.bnm.individuals_api.model.RefreshToken;
+import com.bnm.individuals_api.model.UserData;
+import java.security.Principal;
+import java.util.stream.Collectors;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.OAuth2Constants;
@@ -12,6 +15,8 @@ import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.representations.AccessTokenResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -102,5 +107,22 @@ public class AuthServiceImpl implements AuthService {
       log.error("Refresh token processing error", e);
       return Mono.error(new IllegalArgumentException("Token refresh failed"));
     }
+  }
+
+  @Override
+  public Mono<UserData> aboutMe(final Principal principal) {
+    return Mono.just(principal)
+        .cast(JwtAuthenticationToken.class)
+        .map(jwtAuth -> {
+          final KeycloakUserDetails userDetails = new KeycloakUserDetails(jwtAuth.getToken());
+          return new UserData(
+              userDetails.getId(),
+              userDetails.getEmail(),
+              userDetails.getAuthorities().stream()
+                  .map(GrantedAuthority::getAuthority)
+                  .collect(Collectors.toUnmodifiableSet()),
+              userDetails.getCreatedAt()
+          );
+        });
   }
 }
