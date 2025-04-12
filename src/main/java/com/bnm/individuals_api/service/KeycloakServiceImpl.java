@@ -2,7 +2,6 @@ package com.bnm.individuals_api.service;
 
 import com.bnm.individuals_api.dto.LoginRequest;
 import com.bnm.individuals_api.dto.SuccessAuthResponse;
-import com.bnm.individuals_api.dto.SuccessUserRegistration;
 import com.bnm.individuals_api.dto.UserRegistration;
 import jakarta.ws.rs.core.Response;
 import java.net.URI;
@@ -30,10 +29,9 @@ public class KeycloakServiceImpl implements KeycloakService {
 
   private final ValidationService validationService;
   private final Keycloak keycloak;
+  private final AuthService authService;
   @Value("${keycloak.realm}")
   private String realm;
-
-  private final AuthService authService;
 
   @Override
   public Mono<SuccessAuthResponse> registerUser(final UserRegistration userRegistration) {
@@ -77,7 +75,6 @@ public class KeycloakServiceImpl implements KeycloakService {
 
       final UserResource userResource = keycloak.realm(realm).users().get(createdUserId);
       userResource.roles().realmLevel().add(Collections.singletonList(representation));
-
 
       return authService.authenticateUser(new LoginRequest(userRegistration.email(),
           userRegistration.password()));

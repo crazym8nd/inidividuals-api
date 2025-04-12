@@ -1,12 +1,12 @@
 package com.bnm.individuals_api.api;
 
+import com.bnm.individuals_api.configuration.KeycloakUserDetails;
 import com.bnm.individuals_api.dto.AboutMeResponse;
 import com.bnm.individuals_api.dto.LoginRequest;
 import com.bnm.individuals_api.dto.RefreshTokenRequest;
 import com.bnm.individuals_api.dto.SuccessAuthResponse;
 import com.bnm.individuals_api.dto.UserRegistrationRequest;
 import com.bnm.individuals_api.mapper.DtoMapper;
-import com.bnm.individuals_api.configuration.KeycloakUserDetails;
 import com.bnm.individuals_api.service.AuthService;
 import com.bnm.individuals_api.service.KeycloakService;
 import jakarta.annotation.Nonnull;

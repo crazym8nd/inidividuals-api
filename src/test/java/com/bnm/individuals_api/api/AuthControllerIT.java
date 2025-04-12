@@ -133,7 +133,8 @@ class AuthControllerIT extends KeycloakTestContainer {
         .expectBody(SuccessUserRegistration.class)
         .returnResult().getResponseBody();
 
-    final WebTestClient.ResponseSpec refreshedInfo = webTestClient.post().uri("/v1/auth/refresh-token")
+    final WebTestClient.ResponseSpec refreshedInfo = webTestClient.post()
+        .uri("/v1/auth/refresh-token")
         .body(Mono.just(loginResponse), RefreshTokenRequest.class)
         .exchange();
 
@@ -143,7 +144,8 @@ class AuthControllerIT extends KeycloakTestContainer {
   @Test
   public void refreshToken401() {
 
-    final WebTestClient.ResponseSpec refreshedInfo = webTestClient.post().uri("/v1/auth/refresh-token")
+    final WebTestClient.ResponseSpec refreshedInfo = webTestClient.post()
+        .uri("/v1/auth/refresh-token")
         .body(Mono.just("brtgbfrbfgtbtrb"), RefreshTokenRequest.class)
         .exchange();
 
