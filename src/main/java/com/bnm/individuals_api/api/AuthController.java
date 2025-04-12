@@ -6,19 +6,17 @@ import com.bnm.individuals_api.dto.RefreshTokenRequest;
 import com.bnm.individuals_api.dto.SuccessAuthResponse;
 import com.bnm.individuals_api.dto.UserRegistrationRequest;
 import com.bnm.individuals_api.mapper.DtoMapper;
+import com.bnm.individuals_api.configuration.KeycloakUserDetails;
 import com.bnm.individuals_api.service.AuthService;
 import com.bnm.individuals_api.service.KeycloakService;
 import jakarta.annotation.Nonnull;
 import java.security.Principal;
-import java.time.Instant;
-import java.util.Collection;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -55,19 +53,19 @@ public class AuthController implements AuthApi {
   @Override
   @GetMapping("/me")
   public Mono<AboutMeResponse> aboutMe(final Principal principal) {
-
-    final Authentication authentication = (Authentication) principal;
-    final Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-    final Set<String> roleList = authorities.stream()
-        .map(GrantedAuthority::getAuthority)
-        .collect(Collectors.toUnmodifiableSet());
-
-    return Mono.just(new AboutMeResponse(
-        principal.getName() + "userId",
-        principal.getName() + "mail",
-        roleList,
-        Instant.now()
-    ));
+    return Mono.just(principal)
+        .cast(JwtAuthenticationToken.class)
+        .map(jwtAuth -> {
+          final KeycloakUserDetails userDetails = new KeycloakUserDetails(jwtAuth.getToken());
+          return new AboutMeResponse(
+              userDetails.getId(),
+              userDetails.getEmail(),
+              userDetails.getAuthorities().stream()
+                  .map(GrantedAuthority::getAuthority)
+                  .collect(Collectors.toUnmodifiableSet()),
+              userDetails.getCreatedAt()
+          );
+        });
   }
 
   @Override
