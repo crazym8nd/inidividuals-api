@@ -3,7 +3,7 @@ package com.bnm.individuals_api.api;
 import com.bnm.individuals_api.KeycloakTestContainer;
 import com.bnm.individuals_api.dto.AboutMeResponse;
 import com.bnm.individuals_api.dto.RefreshTokenRequest;
-import com.bnm.individuals_api.dto.SuccessUserRegistration;
+import com.bnm.individuals_api.model.AuthData;
 import com.bnm.individuals_api.model.UserRegistration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,16 +121,15 @@ class AuthControllerIT extends KeycloakTestContainer {
     final WebTestClient.ResponseSpec register = webTestClient.post().uri("/v1/auth/registration")
         .body(Mono.just(validUserRegistration), UserRegistration.class)
         .exchange();
-    final var validLoginRequest = validUserRegistration;
 
     // When
     final WebTestClient.ResponseSpec result = webTestClient.post().uri("/v1/auth/login")
-        .body(Mono.just(validLoginRequest), UserRegistration.class)
+        .body(Mono.just(validUserRegistration), UserRegistration.class)
         .exchange();
 
     // Then
     final var loginResponse = result.expectStatus().isOk()
-        .expectBody(SuccessUserRegistration.class)
+        .expectBody(AuthData.class)
         .returnResult().getResponseBody();
 
     final WebTestClient.ResponseSpec refreshedInfo = webTestClient.post()
@@ -161,12 +160,12 @@ class AuthControllerIT extends KeycloakTestContainer {
         .exchange();
     final UserRegistration validLoginRequest = validUserRegistration;
     final WebTestClient.ResponseSpec response = webTestClient.post().uri("/v1/auth/login")
-        .body(Mono.just(validLoginRequest), UserRegistration.class)
+        .body(Mono.just(validLoginRequest), AuthData.class)
         .exchange();
 
-    final SuccessUserRegistration token = response
+    final AuthData token = response
         .expectStatus().isOk()
-        .expectBody(SuccessUserRegistration.class)
+        .expectBody(AuthData.class)
         .returnResult().getResponseBody();
 
     final String tokenValue = token.accessToken();
