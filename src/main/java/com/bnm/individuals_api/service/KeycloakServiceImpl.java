@@ -1,5 +1,7 @@
 package com.bnm.individuals_api.service;
 
+import com.bnm.individuals_api.dto.LoginRequest;
+import com.bnm.individuals_api.dto.SuccessAuthResponse;
 import com.bnm.individuals_api.dto.SuccessUserRegistration;
 import com.bnm.individuals_api.dto.UserRegistration;
 import jakarta.ws.rs.core.Response;
@@ -31,19 +33,10 @@ public class KeycloakServiceImpl implements KeycloakService {
   @Value("${keycloak.realm}")
   private String realm;
 
-  @Override
-  public Mono<SuccessUserRegistration> testEnpoint(final UserRegistration userRegistration) {
-    validationService.hardcodedValidation(userRegistration);
-    return Mono.just(new SuccessUserRegistration(
-        "asdasefrtbtyberf43t56hytbtrgbf",
-        3600,
-        "referwfcrtbyntyhn",
-        "Bearer"
-    ));
-  }
+  private final AuthService authService;
 
   @Override
-  public Mono<String> registerUser(final UserRegistration userRegistration) {
+  public Mono<SuccessAuthResponse> registerUser(final UserRegistration userRegistration) {
     if (userRegistration.email() == null || userRegistration.password() == null
         || userRegistration.confirmPassword() == null) {
       return Mono.error(new IllegalArgumentException("Empty request"));
@@ -84,7 +77,10 @@ public class KeycloakServiceImpl implements KeycloakService {
 
       final UserResource userResource = keycloak.realm(realm).users().get(createdUserId);
       userResource.roles().realmLevel().add(Collections.singletonList(representation));
-      return Mono.just(createdUserId);
+
+
+      return authService.authenticateUser(new LoginRequest(userRegistration.email(),
+          userRegistration.password()));
     }
     return Mono.empty();
   }

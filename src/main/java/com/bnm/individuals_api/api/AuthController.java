@@ -39,8 +39,7 @@ public class AuthController implements AuthApi {
   @ResponseStatus(HttpStatus.CREATED)
   public Mono<SuccessAuthResponse> registerUser(
       @RequestBody @Nonnull final UserRegistrationRequest request) {
-    return keycloakService.registerUser(DtoMapper.mapFromRequest(request))
-        .map(response -> new SuccessAuthResponse("success", 3600, response, "BEARER"));
+    return keycloakService.registerUser(DtoMapper.mapFromRequest(request));
   }
 
   @Override
