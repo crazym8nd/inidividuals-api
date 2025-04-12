@@ -26,7 +26,8 @@ public class ReactiveSecurityConfig {
         .authorizeExchange(exchange -> exchange
             .pathMatchers(
                 "/v1/auth/registration",
-                "/v1/auth/login"
+                "/v1/auth/login",
+                "/v1/auth/refresh-token"
             ).permitAll()
             .anyExchange().authenticated()
         )

@@ -8,11 +8,6 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:9005/realms/${keycloak.realm}
-          jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
-        opaquetoken:
-          client-id: ${keycloak.clientId}
-          client-secret: ${keycloak.clientSecret}
-          introspection-uri: ${keycloak.urls.auth}/realms/${keycloak.realm}/protocol/openid-connect/token/introspect
 jwt:
   auth:
     converter:
