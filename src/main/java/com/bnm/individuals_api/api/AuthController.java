@@ -7,6 +7,8 @@ import com.bnm.individuals_api.dto.RefreshTokenRequest;
 import com.bnm.individuals_api.dto.SuccessAuthResponse;
 import com.bnm.individuals_api.dto.UserRegistrationRequest;
 import com.bnm.individuals_api.mapper.DtoMapper;
+import com.bnm.individuals_api.model.Credentials;
+import com.bnm.individuals_api.model.RefreshToken;
 import com.bnm.individuals_api.service.AuthService;
 import com.bnm.individuals_api.service.KeycloakService;
 import jakarta.annotation.Nonnull;
@@ -46,7 +48,7 @@ public class AuthController implements AuthApi {
   @PostMapping("/login")
   public Mono<SuccessAuthResponse> loginUser(
       @RequestBody @Nonnull final LoginRequest request) {
-    return authService.authenticateUser(request);
+    return authService.authenticateUser(new Credentials(request.email(), request.password()));
   }
 
   @Override
@@ -71,6 +73,6 @@ public class AuthController implements AuthApi {
   @PostMapping("/refresh-token")
   public Mono<SuccessAuthResponse> refreshToken(
       @RequestBody @Nonnull final RefreshTokenRequest request) {
-    return authService.refreshAccessToken(request);
+    return authService.refreshAccessToken(new RefreshToken(request.refreshToken()));
   }
 }

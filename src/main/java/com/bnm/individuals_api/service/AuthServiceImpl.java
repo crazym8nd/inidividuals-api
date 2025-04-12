@@ -1,8 +1,8 @@
 package com.bnm.individuals_api.service;
 
-import com.bnm.individuals_api.dto.LoginRequest;
-import com.bnm.individuals_api.dto.RefreshTokenRequest;
 import com.bnm.individuals_api.dto.SuccessAuthResponse;
+import com.bnm.individuals_api.model.Credentials;
+import com.bnm.individuals_api.model.RefreshToken;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.OAuth2Constants;
@@ -37,25 +37,26 @@ public class AuthServiceImpl implements AuthService {
   private String clientSecret;
 
 
-  public Keycloak keycloakForAuth(final LoginRequest request) {
+  public Keycloak keycloakForAuth(final Credentials credentials) {
     return KeycloakBuilder.builder()
         .serverUrl(authServerUrl)
         .realm(realm)
         .grantType(OAuth2Constants.PASSWORD)
         .clientId(clientId)
         .clientSecret(clientSecret)
-        .username(request.email())
-        .password(request.password())
+        .username(credentials.email())
+        .password(credentials.password())
         .build();
   }
 
   @Override
-  public Mono<SuccessAuthResponse> authenticateUser(final LoginRequest request) {
+  public Mono<SuccessAuthResponse> authenticateUser(final Credentials credentials) {
     try {
-      if (request.email() == null || request.password() == null) {
+      if (credentials.email() == null || credentials.password() == null) {
         return Mono.error(new IllegalArgumentException("Invalid credentials"));
       }
-      final AccessTokenResponse token = keycloakForAuth(request).tokenManager().getAccessToken();
+      final AccessTokenResponse token = keycloakForAuth(credentials).tokenManager()
+          .getAccessToken();
 
       return Mono.just(new SuccessAuthResponse(
           token.getToken(),
@@ -69,7 +70,7 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  public Mono<SuccessAuthResponse> refreshAccessToken(final RefreshTokenRequest request) {
+  public Mono<SuccessAuthResponse> refreshAccessToken(final RefreshToken request) {
     try {
       if (request == null || request.refreshToken() == null) {
         return Mono.error(new IllegalArgumentException("Invalid refresh token"));

@@ -4,7 +4,7 @@ import com.bnm.individuals_api.KeycloakTestContainer;
 import com.bnm.individuals_api.dto.AboutMeResponse;
 import com.bnm.individuals_api.dto.RefreshTokenRequest;
 import com.bnm.individuals_api.dto.SuccessUserRegistration;
-import com.bnm.individuals_api.dto.UserRegistration;
+import com.bnm.individuals_api.model.UserRegistration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

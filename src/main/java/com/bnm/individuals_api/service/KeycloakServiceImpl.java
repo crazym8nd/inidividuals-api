@@ -1,8 +1,8 @@
 package com.bnm.individuals_api.service;
 
-import com.bnm.individuals_api.dto.LoginRequest;
 import com.bnm.individuals_api.dto.SuccessAuthResponse;
-import com.bnm.individuals_api.dto.UserRegistration;
+import com.bnm.individuals_api.model.Credentials;
+import com.bnm.individuals_api.model.UserRegistration;
 import jakarta.ws.rs.core.Response;
 import java.net.URI;
 import java.util.ArrayList;
@@ -76,7 +76,7 @@ public class KeycloakServiceImpl implements KeycloakService {
       final UserResource userResource = keycloak.realm(realm).users().get(createdUserId);
       userResource.roles().realmLevel().add(Collections.singletonList(representation));
 
-      return authService.authenticateUser(new LoginRequest(userRegistration.email(),
+      return authService.authenticateUser(new Credentials(userRegistration.email(),
           userRegistration.password()));
     }
     return Mono.empty();

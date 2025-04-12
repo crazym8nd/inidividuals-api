@@ -1,7 +1,7 @@
 package com.bnm.individuals_api.service;
 
-import com.bnm.individuals_api.dto.UserRegistration;
 import com.bnm.individuals_api.exception.InvalidRequestData;
+import com.bnm.individuals_api.model.UserRegistration;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
