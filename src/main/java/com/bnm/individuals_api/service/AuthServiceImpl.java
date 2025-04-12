@@ -1,6 +1,7 @@
 package com.bnm.individuals_api.service;
 
 import com.bnm.individuals_api.dto.SuccessAuthResponse;
+import com.bnm.individuals_api.model.AuthData;
 import com.bnm.individuals_api.model.Credentials;
 import com.bnm.individuals_api.model.RefreshToken;
 import lombok.Setter;
@@ -50,7 +51,7 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  public Mono<SuccessAuthResponse> authenticateUser(final Credentials credentials) {
+  public Mono<AuthData> authenticateUser(final Credentials credentials) {
     try {
       if (credentials.email() == null || credentials.password() == null) {
         return Mono.error(new IllegalArgumentException("Invalid credentials"));
@@ -58,7 +59,7 @@ public class AuthServiceImpl implements AuthService {
       final AccessTokenResponse token = keycloakForAuth(credentials).tokenManager()
           .getAccessToken();
 
-      return Mono.just(new SuccessAuthResponse(
+      return Mono.just(new AuthData(
           token.getToken(),
           (int) token.getExpiresIn(),
           token.getRefreshToken(),
@@ -70,7 +71,7 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  public Mono<SuccessAuthResponse> refreshAccessToken(final RefreshToken request) {
+  public Mono<AuthData> refreshAccessToken(final RefreshToken request) {
     try {
       if (request == null || request.refreshToken() == null) {
         return Mono.error(new IllegalArgumentException("Invalid refresh token"));
@@ -87,7 +88,7 @@ public class AuthServiceImpl implements AuthService {
               .with("refresh_token", request.refreshToken()))
           .retrieve()
           .bodyToMono(AccessTokenResponse.class)
-          .map(tokenResponse -> new SuccessAuthResponse(
+          .map(tokenResponse -> new AuthData(
               tokenResponse.getToken(),
               (int) tokenResponse.getExpiresIn(),
               tokenResponse.getRefreshToken(),

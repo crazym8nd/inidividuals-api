@@ -1,6 +1,7 @@
 package com.bnm.individuals_api.service;
 
 import com.bnm.individuals_api.dto.SuccessAuthResponse;
+import com.bnm.individuals_api.model.AuthData;
 import com.bnm.individuals_api.model.Credentials;
 import com.bnm.individuals_api.model.UserRegistration;
 import jakarta.ws.rs.core.Response;
@@ -34,7 +35,7 @@ public class KeycloakServiceImpl implements KeycloakService {
   private String realm;
 
   @Override
-  public Mono<SuccessAuthResponse> registerUser(final UserRegistration userRegistration) {
+  public Mono<AuthData> registerUser(final UserRegistration userRegistration) {
     if (userRegistration.email() == null || userRegistration.password() == null
         || userRegistration.confirmPassword() == null) {
       return Mono.error(new IllegalArgumentException("Empty request"));

@@ -3,7 +3,7 @@ POST http://localhost:8080/v1/auth/registration
 Content-Type: application/json
 
 {
-  "email": "111@asd.com",
+  "email": "5555@asd.com",
   "password": "qwerty",
   "confirmPassword": "qwerty"
 }
@@ -13,7 +13,7 @@ POST http://localhost:8080/v1/auth/login
 Content-Type: application/json
 
 {
-  "email": "111@asd.com",
+  "email": "5555@asd.com",
   "password": "qwerty",
   "confirmPassword": "qwerty"
 }

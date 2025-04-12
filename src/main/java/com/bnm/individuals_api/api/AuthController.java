@@ -41,14 +41,19 @@ public class AuthController implements AuthApi {
   @ResponseStatus(HttpStatus.CREATED)
   public Mono<SuccessAuthResponse> registerUser(
       @RequestBody @Nonnull final UserRegistrationRequest request) {
-    return keycloakService.registerUser(DtoMapper.mapFromRequest(request));
+    return keycloakService.registerUser(DtoMapper.mapFromRequest(request)).map(authData ->
+        new SuccessAuthResponse(authData.accessToken(), authData.expiresIn(),
+            authData.refreshToken(), authData.tokenType()));
   }
 
   @Override
   @PostMapping("/login")
   public Mono<SuccessAuthResponse> loginUser(
       @RequestBody @Nonnull final LoginRequest request) {
-    return authService.authenticateUser(new Credentials(request.email(), request.password()));
+
+    return authService.authenticateUser(new Credentials(request.email(), request.password())).map(authData ->
+        new SuccessAuthResponse(authData.accessToken(), authData.expiresIn(),
+            authData.refreshToken(), authData.tokenType()));
   }
 
   @Override
@@ -73,6 +78,8 @@ public class AuthController implements AuthApi {
   @PostMapping("/refresh-token")
   public Mono<SuccessAuthResponse> refreshToken(
       @RequestBody @Nonnull final RefreshTokenRequest request) {
-    return authService.refreshAccessToken(new RefreshToken(request.refreshToken()));
+    return authService.refreshAccessToken(new RefreshToken(request.refreshToken())).map(authData ->
+        new SuccessAuthResponse(authData.accessToken(), authData.expiresIn(),
+            authData.refreshToken(), authData.tokenType()));
   }
 }
