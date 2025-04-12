@@ -2,31 +2,47 @@ package com.bnm.individuals_api.service;
 
 import com.bnm.individuals_api.exception.InvalidRequestData;
 import com.bnm.individuals_api.model.UserRegistration;
-import java.util.Objects;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
 public class ValidationServiceImpl implements ValidationService {
 
-  final UserRegistration hardcodedValidation = new UserRegistration(
-      "asd@asd.com",
-      "qwerty",
-      "qwerty"
+  private static final Pattern EMAIL_PATTERN = Pattern.compile(
+      "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
   );
 
   @Override
-  public void hardcodedValidation(final UserRegistration userRegistration) {
-    if (!Objects.equals(userRegistration, hardcodedValidation)) {
-      log.info("Data is invalid: '{}'", userRegistration.toString());
-      throw new InvalidRequestData(
-          "Data is invalid:  '%s' ".formatted(userRegistration.toString()));
+  public void validateEmail(final String email) {
+    if (StringUtils.isBlank(email)) {
+      throw new InvalidRequestData("Email не может быть пустым");
+    }
+    if (!EMAIL_PATTERN.matcher(email).matches()) {
+      throw new InvalidRequestData("Неверный формат email адреса");
+    }
+  }
+
+  @Override
+  public void validatePassword(final String password, final String confirmPassword) {
+    if (StringUtils.isBlank(password)) {
+      throw new InvalidRequestData("Пароль не может быть пустым");
+    }
+    if (!StringUtils.equals(password, confirmPassword)) {
+      throw new InvalidRequestData("Пароли не совпадают");
     }
   }
 
   @Override
   public boolean isValid(final UserRegistration userRegistration) {
-    return Objects.equals(userRegistration, hardcodedValidation);
+    try {
+      validateEmail(userRegistration.email());
+      validatePassword(userRegistration.password(), userRegistration.confirmPassword());
+      return true;
+    } catch (final InvalidRequestData e) {
+      return false;
+    }
   }
 }

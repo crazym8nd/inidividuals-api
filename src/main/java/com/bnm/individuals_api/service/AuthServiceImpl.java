@@ -7,6 +7,7 @@ import com.bnm.individuals_api.model.RefreshToken;
 import com.bnm.individuals_api.model.UserData;
 import java.security.Principal;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.OAuth2Constants;
@@ -24,7 +25,10 @@ import reactor.core.publisher.Mono;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+
+  private final ValidationService validationService;
 
   @Value("${keycloak.realm}")
   @Setter
@@ -58,9 +62,8 @@ public class AuthServiceImpl implements AuthService {
   @Override
   public Mono<AuthData> authenticateUser(final Credentials credentials) {
     try {
-      if (credentials.email() == null || credentials.password() == null) {
-        return Mono.error(new IllegalArgumentException("Invalid credentials"));
-      }
+      validationService.validateEmail(credentials.email());
+
       final AccessTokenResponse token = keycloakForAuth(credentials).tokenManager()
           .getAccessToken();
 
@@ -73,6 +76,7 @@ public class AuthServiceImpl implements AuthService {
     } catch (final Exception e) {
       return Mono.error(new IllegalArgumentException("Invalid credentials"));
     }
+
   }
 
   @Override
