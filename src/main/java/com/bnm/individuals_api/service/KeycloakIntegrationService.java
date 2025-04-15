@@ -6,13 +6,33 @@ import com.bnm.individuals_api.model.RefreshToken;
 import com.bnm.individuals_api.model.UserRegistration;
 import reactor.core.publisher.Mono;
 
+/**
+ * Сервис для интеграции по REST с Keycloak
+ */
 public interface KeycloakIntegrationService {
-// здесь уже прям вызовы в кейклок се
 
-  Mono<AuthData> refreshAccessToken(RefreshToken request);
+    /**
+     * Обновляет access token используя refresh token.
+     *
+     * @param request объект содержащий refresh token
+     * @see AuthData
+     */
+    Mono<AuthData> refreshAccessToken(RefreshToken request);
 
-  Mono<AuthData> registerUser(UserRegistration userRegistration);
+    /**
+     * Регистрирует нового пользователя в системе.
+     *
+     * @param userRegistration данные для регистрации нового пользователя
+     * @see AuthData
+     */
+    Mono<AuthData> registerUser(UserRegistration userRegistration);
 
-  Mono<AuthData> authenticateUser(Credentials credentials);
+    /**
+     * Аутентифицирует пользователя по учетным данным.
+     *
+     * @param credentials учетные данные пользователя
+     * @see AuthData
+     */
+    Mono<AuthData> authenticateUser(Credentials credentials);
 
 }
