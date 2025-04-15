@@ -27,7 +27,10 @@ public class ReactiveSecurityConfig {
             .pathMatchers(
                 "/v1/auth/registration",
                 "/v1/auth/login",
-                "/v1/auth/refresh-token"
+                "/v1/auth/refresh-token",
+                "/actuator/**",
+                "/v3/api-docs",
+                "/v3/api-docs.yaml"
             ).permitAll()
             .anyExchange().authenticated()
         )
