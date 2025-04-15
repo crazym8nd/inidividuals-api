@@ -26,6 +26,7 @@ import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -35,10 +36,32 @@ import reactor.core.publisher.Mono;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@EnableConfigurationProperties(KeycloakIntegrationExternalServiceProperties.class)
 public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationService {
 
-  private final Keycloak keycloak;
   private final KeycloakIntegrationExternalServiceProperties properties;
+
+  private Keycloak getAdminKeycloak() {
+    return KeycloakBuilder.builder()
+        .serverUrl(properties.authUrl())
+        .realm(properties.realm())
+        .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+        .clientId(properties.clientId())
+        .clientSecret(properties.clientSecret())
+        .build();
+  }
+
+  private Keycloak getPasswordGrantKeycloak(final Credentials credentials) {
+    return KeycloakBuilder.builder()
+        .serverUrl(properties.authUrl())
+        .realm(properties.realm())
+        .grantType(OAuth2Constants.PASSWORD)
+        .clientId(properties.clientId())
+        .clientSecret(properties.clientSecret())
+        .username(credentials.email())
+        .password(credentials.password())
+        .build();
+  }
 
   @Override
   public Mono<AuthData> refreshAccessToken(final RefreshToken request) {
@@ -88,7 +111,8 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
     list.add(credentialRepresentation);
     user.setCredentials(list);
 
-    final UsersResource usersResource = keycloak.realm(properties.realm()).users();
+    final Keycloak adminKeycloak = getAdminKeycloak();
+    final UsersResource usersResource = adminKeycloak.realm(properties.realm()).users();
     Response response = null;
     if (!Objects.isNull(usersResource)) {
       try {
@@ -105,11 +129,11 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
       final String createdUserId = uri.getPath().substring(uri.getPath().lastIndexOf('/') + 1);
       log.info("Created user {}", createdUserId);
 
-      final RolesResource rolesResource = keycloak.realm(properties.realm()).roles();
+      final RolesResource rolesResource = adminKeycloak.realm(properties.realm()).roles();
       final RoleRepresentation representation = rolesResource.get("INDIVIDUALS")
           .toRepresentation();
 
-      final UserResource userResource = keycloak.realm(properties.realm()).users()
+      final UserResource userResource = adminKeycloak.realm(properties.realm()).users()
           .get(createdUserId);
       userResource.roles().realmLevel().add(Collections.singletonList(representation));
 
@@ -123,7 +147,7 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
   @Override
   public Mono<AuthData> authenticateUser(final Credentials credentials) {
     try {
-      final AccessTokenResponse token = keycloakForAuth(credentials).tokenManager()
+      final AccessTokenResponse token = getPasswordGrantKeycloak(credentials).tokenManager()
           .getAccessToken();
 
       return Mono.just(new AuthData(
@@ -135,17 +159,5 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
     } catch (final Exception e) {
       throw new UnauthorizedCredentialsException(e.getMessage(), e);
     }
-  }
-
-  private Keycloak keycloakForAuth(final Credentials credentials) {
-    return KeycloakBuilder.builder()
-        .serverUrl(properties.authUrl())
-        .realm(properties.realm())
-        .grantType(OAuth2Constants.PASSWORD)
-        .clientId(properties.clientId())
-        .clientSecret(properties.clientSecret())
-        .username(credentials.email())
-        .password(credentials.password())
-        .build();
   }
 }
