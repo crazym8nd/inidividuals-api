@@ -41,6 +41,7 @@ dependencies {
     testImplementation "com.github.dasniko:testcontainers-keycloak:${testcontainers_keycloak_version}"
     testImplementation 'com.h2database:h2'
     testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'io.projectreactor:reactor-test'
 }
 
 tasks.named('test') {
