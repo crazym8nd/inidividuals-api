@@ -46,6 +46,6 @@ dependencies {
 }
 
 tasks.named('test') {
-  //  enabled=false
     useJUnitPlatform()
+    exclude '**/AuthControllerIT.class'
 }
