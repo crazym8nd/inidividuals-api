@@ -37,10 +37,26 @@ class AuthControllerIT {
   }
 
   @Test
-  public void givenInValidIndividualRegistration_whenRegisterIndividual_then400Response() {
+  public void givenInvalidEmail_whenRegisterIndividual_then400Response() {
     // Given
     final UserRegistrationRequest invalidUserRegistration = new UserRegistrationRequest(
         "invalid-email",
+        "pass", "pass");
+
+    // When
+    final WebTestClient.ResponseSpec result = webTestClient.post().uri("/v1/auth/registration")
+        .body(Mono.just(invalidUserRegistration), UserRegistrationRequest.class)
+        .exchange();
+
+    // Then
+    result.expectStatus().isBadRequest().expectBody(ErrorResponse.class);
+  }
+
+  @Test
+  public void givenInvalidPasswords_whenRegisterIndividual_then400Response() {
+    // Given
+    final UserRegistrationRequest invalidUserRegistration = new UserRegistrationRequest(
+        "email@mail.com",
         "pass", "different-pass");
 
     // When
@@ -60,13 +76,11 @@ class AuthControllerIT {
         "testpassword", "testpassword");
 
     // When
-    // First registration
     webTestClient.post().uri("/v1/auth/registration")
         .body(Mono.just(validUserRegistration), UserRegistrationRequest.class)
         .exchange()
         .expectStatus().isCreated();
 
-    // Second registration with same email
     final WebTestClient.ResponseSpec result = webTestClient.post().uri("/v1/auth/registration")
         .body(Mono.just(validUserRegistration), ErrorResponse.class)
         .exchange();
@@ -82,7 +96,6 @@ class AuthControllerIT {
         "login2-test@mail.com",
         "testpassword", "testpassword");
 
-    // Register user first
     webTestClient.post().uri("/v1/auth/registration")
         .body(Mono.just(userRegistration), UserRegistrationRequest.class)
         .exchange()
@@ -117,7 +130,6 @@ class AuthControllerIT {
         "ressfresh-test@mail.com",
         "testpassword", "testpassword");
 
-    // Register and login user first
     webTestClient.post().uri("/v1/auth/registration")
         .body(Mono.just(userRegistration), UserRegistrationRequest.class)
         .exchange()
@@ -164,7 +176,6 @@ class AuthControllerIT {
         "aabout-me-test@mail.com",
         "testpassword", "testpassword");
 
-    // Register and login user first
     webTestClient.post().uri("/v1/auth/registration")
         .body(Mono.just(userRegistration), UserRegistrationRequest.class)
         .exchange()
