@@ -1,6 +1,8 @@
 package com.bnm.individuals_api.service;
 
 import com.bnm.individuals_api.configuration.KeycloakUserDetails;
+import com.bnm.individuals_api.exception.InvalidRefreshToken;
+import com.bnm.individuals_api.exception.UnauthorizedCredentialsException;
 import com.bnm.individuals_api.model.AuthData;
 import com.bnm.individuals_api.model.Credentials;
 import com.bnm.individuals_api.model.RefreshToken;
@@ -61,9 +63,8 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   public Mono<AuthData> authenticateUser(final Credentials credentials) {
+    validationService.validateEmail(credentials.email());
     try {
-      validationService.validateEmail(credentials.email());
-
       final AccessTokenResponse token = keycloakForAuth(credentials).tokenManager()
           .getAccessToken();
 
@@ -74,43 +75,36 @@ public class AuthServiceImpl implements AuthService {
           token.getTokenType()
       ));
     } catch (final Exception e) {
-      return Mono.error(new IllegalArgumentException("Invalid credentials"));
+      throw new UnauthorizedCredentialsException(e.getMessage(), e);
     }
-
   }
 
   @Override
   public Mono<AuthData> refreshAccessToken(final RefreshToken request) {
-    try {
-      if (request == null || request.refreshToken() == null) {
-        return Mono.error(new IllegalArgumentException("Invalid refresh token"));
-      }
-      log.debug(request.refreshToken());
-      final WebClient webClient = WebClient.builder().build();
-
-      return webClient.post()
-          .uri(authServerUrl + "/realms/" + realm + "/protocol/openid-connect/token")
-          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-          .body(BodyInserters.fromFormData("grant_type", "refresh_token")
-              .with("client_id", clientId)
-              .with("client_secret", clientSecret)
-              .with("refresh_token", request.refreshToken()))
-          .retrieve()
-          .bodyToMono(AccessTokenResponse.class)
-          .map(tokenResponse -> new AuthData(
-              tokenResponse.getToken(),
-              (int) tokenResponse.getExpiresIn(),
-              tokenResponse.getRefreshToken(),
-              tokenResponse.getTokenType()
-          ))
-          .onErrorResume(e -> {
-            log.error("Refresh token failed");
-            return Mono.error(new IllegalArgumentException("Token refresh failed"));
-          });
-    } catch (final Exception e) {
-      log.error("Refresh token processing error", e);
-      return Mono.error(new IllegalArgumentException("Token refresh failed"));
+    if (request == null || request.refreshToken() == null) {
+      return Mono.error(new IllegalArgumentException("Invalid refresh token"));
     }
+    log.debug(request.refreshToken());
+    final WebClient webClient = WebClient.builder().build();
+
+    return webClient.post()
+        .uri(authServerUrl + "/realms/" + realm + "/protocol/openid-connect/token")
+        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+        .body(BodyInserters.fromFormData("grant_type", "refresh_token")
+            .with("client_id", clientId)
+            .with("client_secret", clientSecret)
+            .with("refresh_token", request.refreshToken()))
+        .retrieve()
+        .bodyToMono(AccessTokenResponse.class)
+        .map(tokenResponse -> new AuthData(
+            tokenResponse.getToken(),
+            (int) tokenResponse.getExpiresIn(),
+            tokenResponse.getRefreshToken(),
+            tokenResponse.getTokenType()
+        ))
+        .onErrorResume(e -> {
+          throw new InvalidRefreshToken("Invalid refreshToken", e);
+        });
   }
 
   @Override

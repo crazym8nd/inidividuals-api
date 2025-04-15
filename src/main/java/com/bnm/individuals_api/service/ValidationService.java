@@ -8,5 +8,7 @@ public interface ValidationService {
 
   void validatePassword(String password, String confirmPassword);
 
+  void validate(UserRegistration userRegistration);
+
   boolean isValid(UserRegistration userRegistration);
 }

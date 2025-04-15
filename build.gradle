@@ -39,17 +39,13 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'com.github.dasniko:testcontainers-keycloak:3.3.1'
 
-    //if dns resolving not working by default for mac os
-    //testImplementation 'io.projectreactor.netty:reactor-netty-http:1.0.39'
-    //testImplementation 'io.projectreactor.netty:reactor-netty-core:1.0.39'
-    // For macOS with Apple Silicon (M1)
-    //runtimeOnly 'io.netty:netty-resolver-dns-native-macos:4.1.77.Final:osx-aarch_64'
+
     // Mapper
     implementation "org.mapstruct:mapstruct:${mapstruct_version}"
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
 }
 
 tasks.named('test') {
-    enabled=false
+  //  enabled=false
     useJUnitPlatform()
 }

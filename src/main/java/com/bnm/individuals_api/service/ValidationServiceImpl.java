@@ -1,6 +1,6 @@
 package com.bnm.individuals_api.service;
 
-import com.bnm.individuals_api.exception.InvalidRequestData;
+import com.bnm.individuals_api.exception.InvalidRequestDataException;
 import com.bnm.individuals_api.model.UserRegistration;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
@@ -18,21 +18,27 @@ public class ValidationServiceImpl implements ValidationService {
   @Override
   public void validateEmail(final String email) {
     if (StringUtils.isBlank(email)) {
-      throw new InvalidRequestData("Email не может быть пустым");
+      throw new InvalidRequestDataException("Email не может быть пустым");
     }
     if (!EMAIL_PATTERN.matcher(email).matches()) {
-      throw new InvalidRequestData("Неверный формат email адреса");
+      throw new InvalidRequestDataException("Неверный формат email адреса");
     }
   }
 
   @Override
   public void validatePassword(final String password, final String confirmPassword) {
     if (StringUtils.isBlank(password)) {
-      throw new InvalidRequestData("Пароль не может быть пустым");
+      throw new InvalidRequestDataException("Пароль не может быть пустым");
     }
     if (!StringUtils.equals(password, confirmPassword)) {
-      throw new InvalidRequestData("Пароли не совпадают");
+      throw new InvalidRequestDataException("Пароли не совпадают");
     }
+  }
+
+  @Override
+  public void validate(UserRegistration userRegistration) {
+    validateEmail(userRegistration.email());
+    validatePassword(userRegistration.password(), userRegistration.confirmPassword());
   }
 
   @Override
@@ -41,7 +47,7 @@ public class ValidationServiceImpl implements ValidationService {
       validateEmail(userRegistration.email());
       validatePassword(userRegistration.password(), userRegistration.confirmPassword());
       return true;
-    } catch (final InvalidRequestData e) {
+    } catch (final InvalidRequestDataException e) {
       return false;
     }
   }

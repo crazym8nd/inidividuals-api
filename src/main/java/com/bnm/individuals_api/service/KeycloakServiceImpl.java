@@ -1,5 +1,6 @@
 package com.bnm.individuals_api.service;
 
+import com.bnm.individuals_api.exception.EmailAlreadyRegisteredException;
 import com.bnm.individuals_api.model.AuthData;
 import com.bnm.individuals_api.model.Credentials;
 import com.bnm.individuals_api.model.UserRegistration;
@@ -35,48 +36,51 @@ public class KeycloakServiceImpl implements KeycloakService {
 
   @Override
   public Mono<AuthData> registerUser(final UserRegistration userRegistration) {
-    if (validationService.isValid(userRegistration)) {
+    validationService.validate(userRegistration);
 
-      final UserRepresentation user = new UserRepresentation();
-      user.setEnabled(true);
-      user.setUsername(userRegistration.email());
-      user.setEmail(userRegistration.email());
-      user.setFirstName("firstName");
-      user.setLastName("lastName");
-      user.setEmailVerified(true);
+    final UserRepresentation user = new UserRepresentation();
+    user.setEnabled(true);
+    user.setUsername(userRegistration.email());
+    user.setEmail(userRegistration.email());
+    user.setFirstName("firstName");
+    user.setLastName("lastName");
+    user.setEmailVerified(true);
 
-      final CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
-      credentialRepresentation.setValue(userRegistration.password());
-      credentialRepresentation.setTemporary(false);
-      credentialRepresentation.setType(CredentialRepresentation.PASSWORD);
+    final CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
+    credentialRepresentation.setValue(userRegistration.password());
+    credentialRepresentation.setTemporary(false);
+    credentialRepresentation.setType(CredentialRepresentation.PASSWORD);
 
-      final List<CredentialRepresentation> list = new ArrayList<>();
-      list.add(credentialRepresentation);
-      user.setCredentials(list);
+    final List<CredentialRepresentation> list = new ArrayList<>();
+    list.add(credentialRepresentation);
+    user.setCredentials(list);
 
-      final UsersResource usersResource = keycloak.realm(realm).users();
-      if (!Objects.isNull(usersResource)) {
-        final Response response = usersResource.create(user);
-
-        log.debug(response.toString());
-        if (response.getStatus() != 201) {
-          return Mono.error(new IllegalArgumentException("Invalid credentials"));
-        }
-        final URI uri = response.getLocation();
-
-        final String createdUserId = uri.getPath().substring(uri.getPath().lastIndexOf('/') + 1);
-        log.info("Created user {}", createdUserId);
-
-        final RolesResource rolesResource = keycloak.realm(realm).roles();
-        final RoleRepresentation representation = rolesResource.get("INDIVIDUALS")
-            .toRepresentation();
-
-        final UserResource userResource = keycloak.realm(realm).users().get(createdUserId);
-        userResource.roles().realmLevel().add(Collections.singletonList(representation));
-
-        return authService.authenticateUser(new Credentials(userRegistration.email(),
-            userRegistration.password()));
+    final UsersResource usersResource = keycloak.realm(realm).users();
+    Response response = null;
+    if (!Objects.isNull(usersResource)) {
+      try {
+        response = usersResource.create(user);
+      } catch (Exception e) {
+        log.info(e.getMessage(), e);
       }
+
+      if (Objects.requireNonNull(response).getStatus() == 409) {
+        throw new EmailAlreadyRegisteredException("Данный email уже зарегистрирован в системе");
+      }
+      final URI uri = response.getLocation();
+
+      final String createdUserId = uri.getPath().substring(uri.getPath().lastIndexOf('/') + 1);
+      log.info("Created user {}", createdUserId);
+
+      final RolesResource rolesResource = keycloak.realm(realm).roles();
+      final RoleRepresentation representation = rolesResource.get("INDIVIDUALS")
+          .toRepresentation();
+
+      final UserResource userResource = keycloak.realm(realm).users().get(createdUserId);
+      userResource.roles().realmLevel().add(Collections.singletonList(representation));
+
+      return authService.authenticateUser(new Credentials(userRegistration.email(),
+          userRegistration.password()));
     }
 
     return Mono.empty();
