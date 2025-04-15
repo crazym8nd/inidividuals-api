@@ -1,5 +1,6 @@
 package com.bnm.individuals_api.service;
 
+import com.bnm.individuals_api.configuration.KeycloakIntegrationExternalServiceProperties;
 import com.bnm.individuals_api.exception.EmailAlreadyRegisteredException;
 import com.bnm.individuals_api.exception.InvalidRefreshToken;
 import com.bnm.individuals_api.exception.UnauthorizedCredentialsException;
@@ -14,7 +15,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
@@ -26,7 +26,6 @@ import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -39,22 +38,7 @@ import reactor.core.publisher.Mono;
 public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationService {
 
   private final Keycloak keycloak;
-
-  @Value("${keycloak.realm}")
-  @Setter
-  private String realm;
-
-  @Value("${keycloak.urls.auth}")
-  @Setter
-  private String authServerUrl;
-
-  @Value("${keycloak.clientId}")
-  @Setter
-  private String clientId;
-
-  @Value("${keycloak.clientSecret}")
-  @Setter
-  private String clientSecret;
+  private final KeycloakIntegrationExternalServiceProperties properties;
 
   @Override
   public Mono<AuthData> refreshAccessToken(final RefreshToken request) {
@@ -65,11 +49,12 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
     final WebClient webClient = WebClient.builder().build();
 
     return webClient.post()
-        .uri(authServerUrl + "/realms/" + realm + "/protocol/openid-connect/token")
+        .uri(properties.authUrl() + "/realms/" + properties.realm()
+            + "/protocol/openid-connect/token")
         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
         .body(BodyInserters.fromFormData("grant_type", "refresh_token")
-            .with("client_id", clientId)
-            .with("client_secret", clientSecret)
+            .with("client_id", properties.clientId())
+            .with("client_secret", properties.clientSecret())
             .with("refresh_token", request.refreshToken()))
         .retrieve()
         .bodyToMono(AccessTokenResponse.class)
@@ -103,7 +88,7 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
     list.add(credentialRepresentation);
     user.setCredentials(list);
 
-    final UsersResource usersResource = keycloak.realm(realm).users();
+    final UsersResource usersResource = keycloak.realm(properties.realm()).users();
     Response response = null;
     if (!Objects.isNull(usersResource)) {
       try {
@@ -120,11 +105,12 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
       final String createdUserId = uri.getPath().substring(uri.getPath().lastIndexOf('/') + 1);
       log.info("Created user {}", createdUserId);
 
-      final RolesResource rolesResource = keycloak.realm(realm).roles();
+      final RolesResource rolesResource = keycloak.realm(properties.realm()).roles();
       final RoleRepresentation representation = rolesResource.get("INDIVIDUALS")
           .toRepresentation();
 
-      final UserResource userResource = keycloak.realm(realm).users().get(createdUserId);
+      final UserResource userResource = keycloak.realm(properties.realm()).users()
+          .get(createdUserId);
       userResource.roles().realmLevel().add(Collections.singletonList(representation));
 
       return authenticateUser(new Credentials(userRegistration.email(),
@@ -153,14 +139,13 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
 
   private Keycloak keycloakForAuth(final Credentials credentials) {
     return KeycloakBuilder.builder()
-        .serverUrl(authServerUrl)
-        .realm(realm)
+        .serverUrl(properties.authUrl())
+        .realm(properties.realm())
         .grantType(OAuth2Constants.PASSWORD)
-        .clientId(clientId)
-        .clientSecret(clientSecret)
+        .clientId(properties.clientId())
+        .clientSecret(properties.clientSecret())
         .username(credentials.email())
         .password(credentials.password())
         .build();
   }
-
 }

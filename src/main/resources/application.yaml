@@ -16,11 +16,9 @@ jwt:
   jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
 keycloak:
   realm: appauth
-  domain: localhost:9005
   clientId: app-auth-client-id
   clientSecret: XCbcG922tAUdZq0uux5hwhlQzsUeXyk4
-  urls:
-    auth: http://${keycloak.domain}
+  authUrl: http://localhost:9005
 url-frontend-guest: http://localhost
 logging:
   level:
