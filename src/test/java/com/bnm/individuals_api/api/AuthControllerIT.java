@@ -90,7 +90,7 @@ class AuthControllerIT {
 
     // When
     final WebTestClient.ResponseSpec result = webTestClient.post().uri("/v1/auth/login")
-        .body(Mono.just(new LoginRequest("login-test@mail.com", "testpassword")),
+        .body(Mono.just(new LoginRequest("login2-test@mail.com", "testpassword")),
             LoginRequest.class)
         .exchange();
 
