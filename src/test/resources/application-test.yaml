@@ -1,0 +1,19 @@
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${keycloak.authUrl}/realms/${keycloak.realm}
+jwt:
+  auth:
+    converter:
+      resource-id: ${keycloak.clientId}
+  jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
+keycloak:
+  enabled: true
+  realm: appauth
+  clientId: app-auth-client-id
+  clientSecret: XCbcG922tAUdZq0uux5hwhlQzsUeXyk4
+logging:
+  level:
+    root: error

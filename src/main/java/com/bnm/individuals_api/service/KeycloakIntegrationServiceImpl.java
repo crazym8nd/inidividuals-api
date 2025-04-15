@@ -89,15 +89,10 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
 
     final Keycloak adminKeycloak = getAdminClientKeycloak();
     final UsersResource usersResource = adminKeycloak.realm(properties.realm()).users();
-    Response response = null;
     if (!Objects.isNull(usersResource)) {
-      try {
-        response = usersResource.create(user);
-      } catch (final Exception e) {
-        log.info(e.getMessage(), e);
-      }
+      Response response = usersResource.create(user);
 
-      if (Objects.requireNonNull(response).getStatus() == 409) {
+      if (response.getStatus() == 409) {
         throw new EmailAlreadyRegisteredException("Данный email уже зарегистрирован в системе");
       }
       final URI uri = response.getLocation();

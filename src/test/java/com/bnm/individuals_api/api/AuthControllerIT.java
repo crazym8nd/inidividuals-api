@@ -1,5 +1,6 @@
 package com.bnm.individuals_api.api;
 
+import com.bnm.individuals_api.config.KeycloakTestContainers;
 import com.bnm.individuals_api.dto.AboutMeResponse;
 import com.bnm.individuals_api.dto.ErrorResponse;
 import com.bnm.individuals_api.dto.LoginRequest;
@@ -10,11 +11,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "spring.main.allow-bean-definition-overriding=true")
-class AuthControllerIT {
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("test")
+class AuthControllerIT extends KeycloakTestContainers {
 
   @Autowired
   private WebTestClient webTestClient;
