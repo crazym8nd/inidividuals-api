@@ -2,15 +2,15 @@ package com.bnm.individuals_api.service;
 
 import com.bnm.individuals_api.model.AuthData;
 import com.bnm.individuals_api.model.Credentials;
-import com.bnm.individuals_api.model.RefreshToken;
 import com.bnm.individuals_api.model.UserData;
+import com.bnm.individuals_api.model.UserRegistration;
 import java.security.Principal;
 import reactor.core.publisher.Mono;
 
 /**
  * Сервис аутентификации и авторизации пользователей.
  */
-public interface AuthService {
+public interface UserService {
 
   /**
    * Аутентифицирует пользователя по предоставленным учетным данным.
@@ -21,18 +21,18 @@ public interface AuthService {
   Mono<AuthData> authenticateUser(Credentials credentials);
 
   /**
-   * Обновляет access token с помощью refresh token.
-   *
-   * @param request объект, содержащий refresh token
-   * @see AuthData
-   */
-  Mono<AuthData> refreshAccessToken(RefreshToken request);
-
-  /**
    * Получает информацию о текущем аутентифицированном пользователе.
    *
    * @param principal объект, представляющий текущего аутентифицированного пользователя
    * @see UserData
    */
   Mono<UserData> aboutMe(Principal principal);
+
+  /**
+   * Регистрирует нового пользователя в Keycloak.
+   *
+   * @param userRegistration данные для регистрации пользователя
+   * @see AuthData
+   */
+  Mono<AuthData> registerUser(UserRegistration userRegistration);
 }

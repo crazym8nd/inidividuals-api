@@ -7,8 +7,8 @@ import com.bnm.individuals_api.dto.SuccessAuthResponse;
 import com.bnm.individuals_api.dto.UserRegistrationRequest;
 import com.bnm.individuals_api.mapper.AuthMapper;
 import com.bnm.individuals_api.mapper.UserMapper;
-import com.bnm.individuals_api.service.AuthService;
-import com.bnm.individuals_api.service.KeycloakService;
+import com.bnm.individuals_api.service.TokenService;
+import com.bnm.individuals_api.service.UserService;
 import jakarta.annotation.Nonnull;
 import java.security.Principal;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +28,8 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class AuthController implements AuthApi {
 
-  private final KeycloakService keycloakService;
-  private final AuthService authService;
+  private final UserService userService;
+  private final TokenService tokenService;
   private final AuthMapper authMapper;
   private final UserMapper userMapper;
 
@@ -38,7 +38,7 @@ public class AuthController implements AuthApi {
   @ResponseStatus(HttpStatus.CREATED)
   public Mono<SuccessAuthResponse> registerUser(
       @RequestBody @Nonnull final UserRegistrationRequest request) {
-    return keycloakService.registerUser(authMapper.toUserRegistration(request))
+    return userService.registerUser(authMapper.toUserRegistration(request))
         .map(authMapper::toSuccessAuthResponse);
   }
 
@@ -46,14 +46,14 @@ public class AuthController implements AuthApi {
   @PostMapping("/login")
   public Mono<SuccessAuthResponse> loginUser(
       @RequestBody @Nonnull final LoginRequest request) {
-    return authService.authenticateUser(authMapper.toCredentials(request))
+    return userService.authenticateUser(authMapper.toCredentials(request))
         .map(authMapper::toSuccessAuthResponse);
   }
 
   @Override
   @GetMapping("/me")
   public Mono<AboutMeResponse> aboutMe(final Principal principal) {
-    return authService.aboutMe(principal)
+    return userService.aboutMe(principal)
         .map(userMapper::toAboutMeResponse);
   }
 
@@ -61,7 +61,7 @@ public class AuthController implements AuthApi {
   @PostMapping("/refresh-token")
   public Mono<SuccessAuthResponse> refreshToken(
       @RequestBody @Nonnull final RefreshTokenRequest request) {
-    return authService.refreshAccessToken(authMapper.toRefreshToken(request))
+    return tokenService.refreshAccessToken(authMapper.toRefreshToken(request))
         .map(authMapper::toSuccessAuthResponse);
   }
 }
