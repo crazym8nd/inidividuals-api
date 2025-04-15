@@ -1,9 +1,12 @@
 package com.bnm.individuals_api.service;
 
+import com.bnm.individuals_api.exception.InvalidRefreshToken;
 import com.bnm.individuals_api.exception.InvalidRequestDataException;
+import com.bnm.individuals_api.model.RefreshToken;
 import com.bnm.individuals_api.model.UserRegistration;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -36,19 +39,29 @@ public class ValidationServiceImpl implements ValidationService {
   }
 
   @Override
-  public void validate(final UserRegistration userRegistration) {
+  public void validateUserRegistration(final UserRegistration userRegistration) {
     validateEmail(userRegistration.email());
     validatePassword(userRegistration.password(), userRegistration.confirmPassword());
   }
 
   @Override
-  public boolean isValid(final UserRegistration userRegistration) {
+  public boolean isValidUserRegistration(final UserRegistration userRegistration) {
     try {
       validateEmail(userRegistration.email());
       validatePassword(userRegistration.password(), userRegistration.confirmPassword());
       return true;
     } catch (final InvalidRequestDataException e) {
       return false;
+    }
+  }
+
+  @Override
+  public void validateRefreshToken(final RefreshToken request) {
+    if (ObjectUtils.isEmpty(request)) {
+      throw new InvalidRefreshToken("Invalid refresh token");
+    }
+    if (StringUtils.isBlank(request.refreshToken())) {
+      throw new InvalidRefreshToken("Invalid refresh token");
     }
   }
 }

@@ -48,7 +48,7 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public Mono<AuthData> registerUser(final UserRegistration userRegistration) {
-    validationService.validate(userRegistration);
+    validationService.validateUserRegistration(userRegistration);
     return keycloakIntegrationService.registerUser(userRegistration);
   }
 }

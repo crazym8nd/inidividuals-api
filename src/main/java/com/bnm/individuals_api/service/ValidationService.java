@@ -1,6 +1,7 @@
 package com.bnm.individuals_api.service;
 
 import com.bnm.individuals_api.exception.InvalidRequestDataException;
+import com.bnm.individuals_api.model.RefreshToken;
 import com.bnm.individuals_api.model.UserRegistration;
 
 /**
@@ -19,7 +20,7 @@ public interface ValidationService {
   /**
    * Проверяет корректность пароля и его подтверждения.
    *
-   * @param password пароль для проверки
+   * @param password        пароль для проверки
    * @param confirmPassword подтверждение пароля
    * @throws InvalidRequestDataException если пароль не совпадает с подтверждением
    */
@@ -31,7 +32,7 @@ public interface ValidationService {
    * @param userRegistration данные регистрации пользователя
    * @throws InvalidRequestDataException если данные не соответствуют требованиям
    */
-  void validate(UserRegistration userRegistration);
+  void validateUserRegistration(UserRegistration userRegistration);
 
   /**
    * Проверяет валидность данных регистрации пользователя без выбрасывания исключений.
@@ -39,5 +40,7 @@ public interface ValidationService {
    * @param userRegistration данные регистрации пользователя
    * @return true если данные валидны, false в противном случае
    */
-  boolean isValid(UserRegistration userRegistration);
+  boolean isValidUserRegistration(UserRegistration userRegistration);
+
+  void validateRefreshToken(RefreshToken request);
 }

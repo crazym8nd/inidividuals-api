@@ -13,9 +13,11 @@ import reactor.core.publisher.Mono;
 public class TokenServiceImpl implements TokenService {
 
   private final KeycloakIntegrationService keycloakIntegrationService;
+  private final ValidationService validationService;
 
   @Override
   public Mono<AuthData> refreshAccessToken(final RefreshToken request) {
+    validationService.validateRefreshToken(request);
     return keycloakIntegrationService.refreshAccessToken(request);
   }
 }

@@ -41,37 +41,9 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
 
   private final KeycloakIntegrationExternalServiceProperties properties;
 
-  private Keycloak getAdminKeycloak() {
-    return KeycloakBuilder.builder()
-        .serverUrl(properties.authUrl())
-        .realm(properties.realm())
-        .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
-        .clientId(properties.clientId())
-        .clientSecret(properties.clientSecret())
-        .build();
-  }
-
-  private Keycloak getPasswordGrantKeycloak(final Credentials credentials) {
-    return KeycloakBuilder.builder()
-        .serverUrl(properties.authUrl())
-        .realm(properties.realm())
-        .grantType(OAuth2Constants.PASSWORD)
-        .clientId(properties.clientId())
-        .clientSecret(properties.clientSecret())
-        .username(credentials.email())
-        .password(credentials.password())
-        .build();
-  }
-
   @Override
   public Mono<AuthData> refreshAccessToken(final RefreshToken request) {
-    if (request == null || request.refreshToken() == null) {
-      return Mono.error(new IllegalArgumentException("Invalid refresh token"));
-    }
-    log.debug(request.refreshToken());
-    final WebClient webClient = WebClient.builder().build();
-
-    return webClient.post()
+    return getWebClient().post()
         .uri(properties.authUrl() + "/realms/" + properties.realm()
             + "/protocol/openid-connect/token")
         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -111,7 +83,7 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
     list.add(credentialRepresentation);
     user.setCredentials(list);
 
-    final Keycloak adminKeycloak = getAdminKeycloak();
+    final Keycloak adminKeycloak = getAdminClientKeycloak();
     final UsersResource usersResource = adminKeycloak.realm(properties.realm()).users();
     Response response = null;
     if (!Objects.isNull(usersResource)) {
@@ -147,7 +119,8 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
   @Override
   public Mono<AuthData> authenticateUser(final Credentials credentials) {
     try {
-      final AccessTokenResponse token = getPasswordGrantKeycloak(credentials).tokenManager()
+      final AccessTokenResponse token = getAdminClientKeycloakWithUserCredentials(
+          credentials).tokenManager()
           .getAccessToken();
 
       return Mono.just(new AuthData(
@@ -159,5 +132,31 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
     } catch (final Exception e) {
       throw new UnauthorizedCredentialsException(e.getMessage(), e);
     }
+  }
+
+  private Keycloak getAdminClientKeycloak() {
+    return KeycloakBuilder.builder()
+        .serverUrl(properties.authUrl())
+        .realm(properties.realm())
+        .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+        .clientId(properties.clientId())
+        .clientSecret(properties.clientSecret())
+        .build();
+  }
+
+  private Keycloak getAdminClientKeycloakWithUserCredentials(final Credentials credentials) {
+    return KeycloakBuilder.builder()
+        .serverUrl(properties.authUrl())
+        .realm(properties.realm())
+        .grantType(OAuth2Constants.PASSWORD)
+        .clientId(properties.clientId())
+        .clientSecret(properties.clientSecret())
+        .username(credentials.email())
+        .password(credentials.password())
+        .build();
+  }
+
+  private WebClient getWebClient() {
+    return WebClient.builder().build();
   }
 }
