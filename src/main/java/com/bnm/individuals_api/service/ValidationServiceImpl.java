@@ -36,7 +36,7 @@ public class ValidationServiceImpl implements ValidationService {
   }
 
   @Override
-  public void validate(UserRegistration userRegistration) {
+  public void validate(final UserRegistration userRegistration) {
     validateEmail(userRegistration.email());
     validatePassword(userRegistration.password(), userRegistration.confirmPassword());
   }
