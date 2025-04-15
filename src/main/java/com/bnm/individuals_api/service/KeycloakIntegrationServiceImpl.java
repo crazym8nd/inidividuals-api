@@ -26,6 +26,7 @@ import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,9 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @RequiredArgsConstructor
 @EnableConfigurationProperties(KeycloakIntegrationExternalServiceProperties.class)
+@ConditionalOnProperty(
+    value = "keycloak.enabled",
+    havingValue = "true")
 public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationService {
 
   private final KeycloakIntegrationExternalServiceProperties properties;

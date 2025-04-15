@@ -47,5 +47,5 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
-    exclude '**/AuthControllerIT.class'
+  //  exclude '**/AuthControllerIT.class'
 }
