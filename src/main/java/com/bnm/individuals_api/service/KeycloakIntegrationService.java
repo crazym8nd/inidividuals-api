@@ -7,7 +7,8 @@ import com.bnm.individuals_api.model.UserRegistration;
 import reactor.core.publisher.Mono;
 
 /**
- * Сервис для интеграции по REST с Keycloak
+ * Сервис для интеграции c Keycloak.
+ * Содержит методы, обращающиеся к конкретным API Keycloak сервера.
  */
 public interface KeycloakIntegrationService {
 
