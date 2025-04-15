@@ -21,7 +21,7 @@ repositories {
 dependencies {
     //spring
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
-    implementation 'org.springdoc:springdoc-openapi-starter-webflux-api:2.8.6'
+    implementation "org.springdoc:springdoc-openapi-starter-webflux-api:${springdoc_openapi_version}"
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.security:spring-security-oauth2-resource-server'
     implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -30,17 +30,17 @@ dependencies {
     //keycloak
     implementation "org.keycloak:keycloak-admin-client:${keycloak_admin_client_version}"
 
+    // Mapper
+    implementation "org.mapstruct:mapstruct:${mapstruct_version}"
+    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
+
     //test
     testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'com.github.dasniko:testcontainers-keycloak:3.7.0'
-    testImplementation 'com.h2database:h2:2.2.224'
+    testImplementation "com.github.dasniko:testcontainers-keycloak:${testcontainers_keycloak_version}"
+    testImplementation 'com.h2database:h2'
     testImplementation 'org.testcontainers:junit-jupiter'
-
-    // Mapper
-    implementation "org.mapstruct:mapstruct:${mapstruct_version}"
-    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
 }
 
 tasks.named('test') {
