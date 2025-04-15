@@ -29,6 +29,5 @@ public abstract class KeycloakTestContainers {
   @DynamicPropertySource
   static void redisProperties(DynamicPropertyRegistry registry) {
     registry.add("keycloak.authUrl", keycloak::getAuthServerUrl);
-    log.info("Keycloak test container started at: {}", keycloak.getAuthServerUrl());
   }
 } 
