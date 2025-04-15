@@ -74,8 +74,6 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
     user.setEnabled(true);
     user.setUsername(userRegistration.email());
     user.setEmail(userRegistration.email());
-    user.setFirstName("firstName");
-    user.setLastName("lastName");
     user.setEmailVerified(true);
 
     final CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
