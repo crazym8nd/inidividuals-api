@@ -1,4 +1,13 @@
 services:
+  individuals-api:
+    build:
+      context: ..
+      dockerfile: distirbution/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - keycloak
   db:
     image: bitnami/postgresql:16.2.0
     restart: always
@@ -9,7 +18,7 @@ services:
       POSTGRES_DB: person
       POSTGRESQL_TIMEZONE: "UTC"
     ports:
-      - 5432:5432
+      - "5432:5432"
   keycloak:
     image: quay.io/keycloak/keycloak:26.2.0
     container_name: keycloak
@@ -28,3 +37,5 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: "admin"
       KC_BOOTSTRAP_ADMIN_PASSWORD: "admin"
       KC_FEATURES: token-exchange,admin-fine-grained-authz
+    depends_on:
+      - db
