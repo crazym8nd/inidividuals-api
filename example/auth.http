@@ -3,9 +3,9 @@ POST http://localhost:8080/v1/auth/registration
 Content-Type: application/json
 
 {
-  "email": "5555@asd.com",
+  "email": "test@asd.com",
   "password": "qwerty",
-  "confirmPassword": "qwerty"
+  "confirm_password": "qwerty"
 }
 
 ### login user
@@ -13,9 +13,8 @@ POST http://localhost:8080/v1/auth/login
 Content-Type: application/json
 
 {
-  "email": "5555@asd.com",
-  "password": "qwerty",
-  "confirmPassword": "qwerty"
+  "email": "test@asd.com",
+  "password": "qwerty"
 }
 
 ### about me

@@ -7,12 +7,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:9005/realms/${keycloak.realm}
+          issuer-uri: ${keycloak.authUrl}/realms/${keycloak.realm}
 jwt:
-  auth:
-    converter:
-      principal-attribute: preferred_username
-      resource-id: ${keycloak.clientId}
   jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
 keycloak:
   enabled: true
@@ -20,7 +16,6 @@ keycloak:
   clientId: app-auth-client-id
   clientSecret: XCbcG922tAUdZq0uux5hwhlQzsUeXyk4
   authUrl: http://localhost:9005
-url-frontend-guest: http://localhost
 logging:
   level:
     root: info
