@@ -8,6 +8,8 @@ services:
     depends_on:
       - db
       - keycloak
+    environment:
+      - keycloak.authUrl=http://keycloak:8080
   db:
     image: bitnami/postgresql:16.2.0
     restart: always
