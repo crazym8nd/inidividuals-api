@@ -4,6 +4,7 @@ import com.bnm.individuals_api.configuration.KeycloakIntegrationExternalServiceP
 import com.bnm.individuals_api.exception.EmailAlreadyRegisteredException;
 import com.bnm.individuals_api.exception.InvalidRefreshToken;
 import com.bnm.individuals_api.exception.UnauthorizedCredentialsException;
+import com.bnm.individuals_api.exception.UserRegistrationException;
 import com.bnm.individuals_api.model.AuthData;
 import com.bnm.individuals_api.model.Credentials;
 import com.bnm.individuals_api.model.RefreshToken;
@@ -32,6 +33,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -72,35 +74,48 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
         })
         .onErrorResume(e -> {
           log.error("Failed to refresh access token: {}", e.getMessage());
-          throw new InvalidRefreshToken("Invalid refreshToken", e);
+          throw new InvalidRefreshToken(String.format("Invalid refresh token: %s", e.getMessage()), e);
         });
   }
 
   @Override
   public Mono<AuthData> registerUser(final UserRegistration userRegistration) {
+    try {
+      final UserRepresentation user = createUserRepresentation(userRegistration);
+      final Keycloak adminKeycloak = getAdminClientKeycloak();
+      final UsersResource usersResource = adminKeycloak.realm(properties.realm()).users();
 
-    final UserRepresentation user = createUserRepresentation(userRegistration);
-    final Keycloak adminKeycloak = getAdminClientKeycloak();
-    final UsersResource usersResource = adminKeycloak.realm(properties.realm()).users();
+      if (Objects.isNull(usersResource)) {
+        log.error("Failed to get users resource for realm: {}", properties.realm());
+        return Mono.error(new UserRegistrationException(String.format("Failed to get access to users resource for realm: %s", properties.realm())));
+      }
 
-    if (usersResource == null) {
-      log.error("Failed to get users resource for realm: {}", properties.realm());
-      return Mono.empty();
+      final Response response = usersResource.create(user);
+
+      switch (response.getStatus()) {
+        case 201 -> {
+          final URI uri = response.getLocation();
+          final String createdUserId = uri.getPath().substring(uri.getPath().lastIndexOf('/') + 1);
+          log.info("Successfully created user with ID: {}", createdUserId);
+
+          assignRoleToUser(adminKeycloak, createdUserId);
+          return authenticateUser(new Credentials(userRegistration.email(), userRegistration.password()));
+        }
+        case 409 -> {
+          log.warn("User registration failed - email already exists: {}", userRegistration.email());
+          throw new EmailAlreadyRegisteredException(String.format("Email %s is already registered in the system", userRegistration.email()));
+        }
+        default -> {
+          log.error("User registration failed with status: {}", response.getStatus());
+          throw new UserRegistrationException(String.format("User registration error. Status: %d", response.getStatus()));
+        }
+      }
+    } catch (EmailAlreadyRegisteredException e) {
+      throw e;
+    } catch (Exception e) {
+      log.error("Unexpected error during user registration: {}", e.getMessage());
+      throw new UserRegistrationException(String.format("Unexpected error during user registration: %s", e.getMessage()), e);
     }
-
-    final Response response = usersResource.create(user);
-
-    if (response.getStatus() == 409) {
-      log.warn("User registration failed - email already exists: {}", userRegistration.email());
-      throw new EmailAlreadyRegisteredException("Данный email уже зарегистрирован в системе");
-    }
-
-    final URI uri = response.getLocation();
-    final String createdUserId = uri.getPath().substring(uri.getPath().lastIndexOf('/') + 1);
-    log.info("Successfully created user with ID: {}", createdUserId);
-
-    assignRoleToUser(adminKeycloak, createdUserId);
-    return authenticateUser(new Credentials(userRegistration.email(), userRegistration.password()));
   }
 
   private UserRepresentation createUserRepresentation(final UserRegistration userRegistration) {
@@ -131,7 +146,7 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
       log.info("Successfully assigned role {} to user {}", ROLE_INDIVIDUALS, userId);
     } catch (final Exception e) {
       log.error("Failed to assign role to user {}: {}", userId, e.getMessage());
-      throw e;
+      throw new UserRegistrationException(String.format("Failed to assign role %s to user %s: %s", ROLE_INDIVIDUALS, userId, e.getMessage()), e);
     }
   }
 
@@ -151,7 +166,7 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
       ));
     } catch (final Exception e) {
       log.error("Authentication failed for user {}: {}", credentials.email(), e.getMessage());
-      throw new UnauthorizedCredentialsException("Неверные учетные данные", e);
+      throw new UnauthorizedCredentialsException(String.format("Authentication failed for user %s: %s", credentials.email(), e.getMessage()), e);
     }
   }
 
