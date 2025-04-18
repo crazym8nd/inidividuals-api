@@ -10,10 +10,8 @@ import com.bnm.individuals_api.model.RefreshToken;
 import com.bnm.individuals_api.model.UserRegistration;
 import jakarta.ws.rs.core.Response;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.OAuth2Constants;
@@ -30,6 +28,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -37,39 +36,74 @@ import reactor.core.publisher.Mono;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Validated
 @EnableConfigurationProperties(KeycloakIntegrationExternalServiceProperties.class)
 @ConditionalOnProperty(
     value = "keycloak.enabled",
     havingValue = "true")
 public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationService {
 
+  private static final String ROLE_INDIVIDUALS = "INDIVIDUALS";
+  private static final String TOKEN_PATH = "/protocol/openid-connect/token";
+  private static final String GRANT_TYPE_REFRESH = "refresh_token";
+
   private final KeycloakIntegrationExternalServiceProperties properties;
+  private final WebClient webClient;
 
   @Override
   public Mono<AuthData> refreshAccessToken(final RefreshToken request) {
-    return getWebClient().post()
-        .uri(properties.authUrl() + "/realms/" + properties.realm()
-            + "/protocol/openid-connect/token")
+    return webClient.post()
+        .uri(properties.authUrl() + "/realms/" + properties.realm() + TOKEN_PATH)
         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-        .body(BodyInserters.fromFormData("grant_type", "refresh_token")
+        .body(BodyInserters.fromFormData("grant_type", GRANT_TYPE_REFRESH)
             .with("client_id", properties.clientId())
             .with("client_secret", properties.clientSecret())
             .with("refresh_token", request.refreshToken()))
         .retrieve()
         .bodyToMono(AccessTokenResponse.class)
-        .map(tokenResponse -> new AuthData(
-            tokenResponse.getToken(),
-            (int) tokenResponse.getExpiresIn(),
-            tokenResponse.getRefreshToken(),
-            tokenResponse.getTokenType()
-        ))
+        .map(tokenResponse -> {
+          log.info("Successfully refreshed access token");
+          return new AuthData(
+              tokenResponse.getToken(),
+              (int) tokenResponse.getExpiresIn(),
+              tokenResponse.getRefreshToken(),
+              tokenResponse.getTokenType()
+          );
+        })
         .onErrorResume(e -> {
+          log.error("Failed to refresh access token: {}", e.getMessage());
           throw new InvalidRefreshToken("Invalid refreshToken", e);
         });
   }
 
   @Override
   public Mono<AuthData> registerUser(final UserRegistration userRegistration) {
+
+    final UserRepresentation user = createUserRepresentation(userRegistration);
+    final Keycloak adminKeycloak = getAdminClientKeycloak();
+    final UsersResource usersResource = adminKeycloak.realm(properties.realm()).users();
+
+    if (usersResource == null) {
+      log.error("Failed to get users resource for realm: {}", properties.realm());
+      return Mono.empty();
+    }
+
+    final Response response = usersResource.create(user);
+
+    if (response.getStatus() == 409) {
+      log.warn("User registration failed - email already exists: {}", userRegistration.email());
+      throw new EmailAlreadyRegisteredException("Данный email уже зарегистрирован в системе");
+    }
+
+    final URI uri = response.getLocation();
+    final String createdUserId = uri.getPath().substring(uri.getPath().lastIndexOf('/') + 1);
+    log.info("Successfully created user with ID: {}", createdUserId);
+
+    assignRoleToUser(adminKeycloak, createdUserId);
+    return authenticateUser(new Credentials(userRegistration.email(), userRegistration.password()));
+  }
+
+  private UserRepresentation createUserRepresentation(final UserRegistration userRegistration) {
     final UserRepresentation user = new UserRepresentation();
     user.setEnabled(true);
     user.setUsername(userRegistration.email());
@@ -81,45 +115,34 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
     credentialRepresentation.setTemporary(false);
     credentialRepresentation.setType(CredentialRepresentation.PASSWORD);
 
-    final List<CredentialRepresentation> list = new ArrayList<>();
-    list.add(credentialRepresentation);
-    user.setCredentials(list);
+    user.setCredentials(List.of(credentialRepresentation));
+    return user;
+  }
 
-    final Keycloak adminKeycloak = getAdminClientKeycloak();
-    final UsersResource usersResource = adminKeycloak.realm(properties.realm()).users();
-    if (!Objects.isNull(usersResource)) {
-      Response response = usersResource.create(user);
-
-      if (response.getStatus() == 409) {
-        throw new EmailAlreadyRegisteredException("Данный email уже зарегистрирован в системе");
-      }
-      final URI uri = response.getLocation();
-
-      final String createdUserId = uri.getPath().substring(uri.getPath().lastIndexOf('/') + 1);
-      log.info("Created user {}", createdUserId);
-
+  private void assignRoleToUser(final Keycloak adminKeycloak, final String userId) {
+    try {
       final RolesResource rolesResource = adminKeycloak.realm(properties.realm()).roles();
-      final RoleRepresentation representation = rolesResource.get("INDIVIDUALS")
+      final RoleRepresentation representation = rolesResource.get(ROLE_INDIVIDUALS)
           .toRepresentation();
 
       final UserResource userResource = adminKeycloak.realm(properties.realm()).users()
-          .get(createdUserId);
+          .get(userId);
       userResource.roles().realmLevel().add(Collections.singletonList(representation));
-
-      return authenticateUser(new Credentials(userRegistration.email(),
-          userRegistration.password()));
+      log.info("Successfully assigned role {} to user {}", ROLE_INDIVIDUALS, userId);
+    } catch (final Exception e) {
+      log.error("Failed to assign role to user {}: {}", userId, e.getMessage());
+      throw e;
     }
-
-    return Mono.empty();
   }
 
   @Override
   public Mono<AuthData> authenticateUser(final Credentials credentials) {
     try {
-      final AccessTokenResponse token = getAdminClientKeycloakWithUserCredentials(
-          credentials).tokenManager()
+      final AccessTokenResponse token = getAdminClientKeycloakWithUserCredentials(credentials)
+          .tokenManager()
           .getAccessToken();
 
+      log.info("Successfully authenticated user: {}", credentials.email());
       return Mono.just(new AuthData(
           token.getToken(),
           (int) token.getExpiresIn(),
@@ -127,7 +150,8 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
           token.getTokenType()
       ));
     } catch (final Exception e) {
-      throw new UnauthorizedCredentialsException(e.getMessage(), e);
+      log.error("Authentication failed for user {}: {}", credentials.email(), e.getMessage());
+      throw new UnauthorizedCredentialsException("Неверные учетные данные", e);
     }
   }
 
@@ -151,9 +175,5 @@ public class KeycloakIntegrationServiceImpl implements KeycloakIntegrationServic
         .username(credentials.email())
         .password(credentials.password())
         .build();
-  }
-
-  private WebClient getWebClient() {
-    return WebClient.builder().build();
   }
 }
