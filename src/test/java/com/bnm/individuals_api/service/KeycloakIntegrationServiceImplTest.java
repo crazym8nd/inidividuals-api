@@ -7,8 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.bnm.individuals_api.config.KeycloakTestContainers;
 import com.bnm.individuals_api.configuration.KeycloakIntegrationExternalServiceProperties;
 import com.bnm.individuals_api.exception.EmailAlreadyRegisteredException;
+import com.bnm.individuals_api.exception.InvalidRefreshToken;
 import com.bnm.individuals_api.exception.UnauthorizedCredentialsException;
 import com.bnm.individuals_api.model.Credentials;
+import com.bnm.individuals_api.model.RefreshToken;
 import com.bnm.individuals_api.model.UserRegistration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +27,12 @@ import reactor.test.StepVerifier;
 @SpringBootTest
 @ActiveProfiles("test")
 class KeycloakIntegrationServiceImplTest extends KeycloakTestContainers {
+
+  private static final String TEST_EMAIL = "test@example.com";
+  private static final String TEST_PASSWORD = "Password123!";
+  private static final String TEST_AUTH_EMAIL = "auth-test@example.com";
+  private static final String INVALID_EMAIL = "not-an-email";
+  private static final String INVALID_REFRESH_TOKEN = "invalid-refresh-token";
 
   private KeycloakIntegrationServiceImpl keycloakIntegrationService;
   private Keycloak adminClient;
@@ -60,15 +68,13 @@ class KeycloakIntegrationServiceImplTest extends KeycloakTestContainers {
   }
 
   @Test
-  void shouldSuccessfullyRegisterNewUser() {
-    // given
+  void registerUser_WithValidData_ShouldSuccessfullyCreateUser() {
     final UserRegistration userRegistrationRequest = new UserRegistration(
-        "test@example.com",
-        "Password123!",
-        "Password123!"
+        TEST_EMAIL,
+        TEST_PASSWORD,
+        TEST_PASSWORD
     );
 
-    // when & then
     StepVerifier.create(keycloakIntegrationService.registerUser(userRegistrationRequest))
         .assertNext(authData -> {
           assertNotNull(authData.accessToken());
@@ -80,18 +86,15 @@ class KeycloakIntegrationServiceImplTest extends KeycloakTestContainers {
   }
 
   @Test
-  void shouldFailWhenRegisteringUserWithExistingEmail() {
-    // given
+  void registerUser_WithExistingEmail_ShouldFailWithEmailAlreadyRegistered() {
     final UserRegistration userRegistrationRequest = new UserRegistration(
-        "test@example.com",
-        "Password123!",
-        "Password123!"
+        TEST_EMAIL,
+        TEST_PASSWORD,
+        TEST_PASSWORD
     );
 
-    // Register first time
     keycloakIntegrationService.registerUser(userRegistrationRequest).block();
 
-    // when & then - try to register again
     StepVerifier.create(keycloakIntegrationService.registerUser(userRegistrationRequest))
         .expectErrorMatches(throwable ->
             throwable instanceof EmailAlreadyRegisteredException &&
@@ -102,12 +105,24 @@ class KeycloakIntegrationServiceImplTest extends KeycloakTestContainers {
   }
 
   @Test
-  void shouldSuccessfullyAuthenticateUser() {
-    // given
+  void registerUser_WithInvalidEmail_ShouldFailWithValidationError() {
     final UserRegistration userRegistrationRequest = new UserRegistration(
-        "auth-test@example.com",
-        "Password123!",
-        "Password123!"
+        INVALID_EMAIL,
+        TEST_PASSWORD,
+        TEST_PASSWORD
+    );
+
+    StepVerifier.create(keycloakIntegrationService.registerUser(userRegistrationRequest))
+        .expectError()
+        .verify();
+  }
+
+  @Test
+  void authenticateUser_WithValidCredentials_ShouldSuccessfullyAuthenticate() {
+    final UserRegistration userRegistrationRequest = new UserRegistration(
+        TEST_AUTH_EMAIL,
+        TEST_PASSWORD,
+        TEST_PASSWORD
     );
     keycloakIntegrationService.registerUser(userRegistrationRequest).block();
 
@@ -116,7 +131,6 @@ class KeycloakIntegrationServiceImplTest extends KeycloakTestContainers {
         userRegistrationRequest.password()
     );
 
-    // when & then
     StepVerifier.create(keycloakIntegrationService.authenticateUser(credentials))
         .assertNext(authData -> {
           assertNotNull(authData.accessToken());
@@ -128,16 +142,45 @@ class KeycloakIntegrationServiceImplTest extends KeycloakTestContainers {
   }
 
   @Test
-  void shouldFailToAuthenticateWithInvalidCredentials() {
-    // given
+  void authenticateUser_WithInvalidCredentials_ShouldFailWithUnauthorized() {
     final Credentials invalidCredentials = new Credentials(
         "nonexistent@example.com",
         "WrongPassword123!"
     );
 
-    // when & then
     StepVerifier.create(keycloakIntegrationService.authenticateUser(invalidCredentials))
         .expectError(UnauthorizedCredentialsException.class)
+        .verify();
+  }
+
+  @Test
+  void refreshToken_WithValidToken_ShouldReturnNewAccessToken() {
+    final UserRegistration userRegistration = new UserRegistration(
+        TEST_EMAIL,
+        TEST_PASSWORD,
+        TEST_PASSWORD
+    );
+
+    final String refreshToken = keycloakIntegrationService.registerUser(userRegistration)
+        .block()
+        .refreshToken();
+
+    StepVerifier.create(
+            keycloakIntegrationService.refreshAccessToken(new RefreshToken(refreshToken)))
+        .assertNext(authData -> {
+          assertNotNull(authData.accessToken());
+          assertNotNull(authData.refreshToken());
+          assertTrue(authData.expiresIn() > 0);
+          assertEquals("Bearer", authData.tokenType());
+        })
+        .verifyComplete();
+  }
+
+  @Test
+  void refreshToken_WithInvalidToken_ShouldFailWithInvalidRefreshToken() {
+    StepVerifier.create(keycloakIntegrationService.refreshAccessToken(
+            new RefreshToken(INVALID_REFRESH_TOKEN)))
+        .expectError(InvalidRefreshToken.class)
         .verify();
   }
 } 
