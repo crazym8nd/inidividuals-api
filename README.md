@@ -1,4 +1,4 @@
-Impplementation of  individual api (orchestrator), which will be responsible for interaction with the outside world and orchestration of calls to "internal" services.
+Implementation of  individual api (orchestrator), which will be responsible for interaction with the outside world and orchestration of calls to "internal" services.
 
 Functionality:
 - User registration and login

@@ -53,9 +53,7 @@ class TokenServiceImplTest {
         .when(validationService)
         .validateRefreshToken(refreshToken);
 
-    assertThrows(InvalidRefreshToken.class, () -> {
-      tokenService.refreshAccessToken(refreshToken).block();
-    });
+    assertThrows(InvalidRefreshToken.class, () -> tokenService.refreshAccessToken(refreshToken).block());
 
     verify(validationService).validateRefreshToken(refreshToken);
     verifyNoInteractions(keycloakIntegrationService);
