@@ -21,11 +21,6 @@ public abstract class KeycloakTestContainers {
     keycloak.start();
   }
 
-  @AfterAll
-  static void tearOff() {
-    keycloak.stop();
-  }
-
   @DynamicPropertySource
   static void redisProperties(DynamicPropertyRegistry registry) {
     registry.add("keycloak.authUrl", keycloak::getAuthServerUrl);
